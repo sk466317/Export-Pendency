@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -524,6 +523,31 @@
     color: var(--muted);
     margin-top: 4px;
   }
+  .admin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+  .admin-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    font-size: 0.68rem;
+    background: #fff;
+  }
+  .admin-table th,
+  .admin-table td {
+    border: 1px solid var(--border);
+    padding: 6px 7px;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+  }
+  .admin-table th {
+    background: #e8f0fe;
+    color: var(--primary-dark);
+    font-weight: 800;
+  }
 
   /* Colors for avatars */
   .c0 { background: #1A73E8; }
@@ -660,7 +684,9 @@
   <div class="tab-content" id="tab-admin">
     <div class="form-section">
       <div class="section-label">Admin Report</div>
-      <div class="record-detail block">Damanjit can download complete visit data for all users, including the hidden saved date and time.</div>
+      <div class="record-detail block">Complete Visit For all users Date and time.</div>
+      <div class="field-label">Report Date</div>
+      <input type="date" id="adminReportDate" onchange="renderAdminSummary()">
       <button class="submit-btn" onclick="downloadAdminReport()">⬇️ Download Excel Report</button>
     </div>
     <div id="adminSummary"></div>
@@ -691,7 +717,7 @@
 
 <div id="toast">✓ Saved!</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
@@ -801,6 +827,7 @@ function doLogin() {
   document.getElementById('appScreen').style.display = 'flex';
   document.getElementById('topBarName').textContent = currentUser.name;
   document.getElementById('adminTabBtn').style.display = currentUser.admin ? 'block' : 'none';
+  if (currentUser.admin) setAdminReportDateDefault();
   requestNotificationAccess();
   startCloudRecords();
   // Set current datetime
@@ -1197,22 +1224,82 @@ function closeNotificationModalDirect() {
   document.getElementById('notificationModal').classList.remove('open');
 }
 
+function setAdminReportDateDefault() {
+  const input = document.getElementById('adminReportDate');
+  if (!input || input.value) return;
+  const now = new Date();
+  input.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+function getAdminReportDate() {
+  return document.getElementById('adminReportDate')?.value || '';
+}
+
+function recordMatchesAdminDate(record) {
+  const selectedDate = getAdminReportDate();
+  if (!selectedDate) return true;
+  const dateValue = record.visitDateTime || record.savedAt || record.savedAtLocal;
+  if (!dateValue) return false;
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return String(dateValue).slice(0, 10) === selectedDate;
+  const localDate = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  return localDate === selectedDate;
+}
+
+function getAdminReportRecords() {
+  return cloudRecords.filter(recordMatchesAdminDate);
+}
+
+function renderAdminRecordsTable(records) {
+  if (!records.length) {
+    return `<div class="empty-state"><div class="emoji">📋</div><p>No records found for selected date.</p></div>`;
+  }
+  const displayColumns = [
+    ['user', 'User'],
+    ['companyName', 'Company Name'],
+    ['companyType', 'Type'],
+    ['visitDateTime', 'Visit Date & Time'],
+    ['meetingClose', 'Meeting Close Date & Time'],
+    ['lastVisit', 'Last Visit Date & Time']
+  ];
+  return `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>${displayColumns.map(([, label]) => `<th>${escHtml(label)}</th>`).join('')}</tr>
+        </thead>
+        <tbody>
+          ${records.map(record => `
+            <tr>
+              ${displayColumns.map(([key]) => `<td>${escHtml(REPORT_DATE_KEYS.has(key) ? fmtDT(record[key]) : (record[key] || '-'))}</td>`).join('')}
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 function renderAdminSummary() {
   if (!currentUser?.admin) return;
+  setAdminReportDateDefault();
   const box = document.getElementById('adminSummary');
   if (!cloudRecords.length) {
     box.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No records available for report.</p></div>`;
     return;
   }
-  const userCounts = cloudRecords.reduce((acc, r) => {
+  const reportRecords = getAdminReportRecords();
+  const userCounts = reportRecords.reduce((acc, r) => {
     acc[r.user || 'Unknown'] = (acc[r.user || 'Unknown'] || 0) + 1;
     return acc;
   }, {});
   box.innerHTML = `
     <div class="form-section">
       <div class="section-label">Report Summary</div>
-      <div class="record-detail">Total Records: <strong>${cloudRecords.length}</strong></div>
+      <div class="record-detail">Selected Date: <strong>${escHtml(getAdminReportDate() || 'All Dates')}</strong></div>
+      <div class="record-detail">Total Records: <strong>${reportRecords.length}</strong></div>
       ${Object.keys(userCounts).sort().map(user => `<div class="record-detail">${escHtml(user)}: <strong>${userCounts[user]}</strong></div>`).join('')}
+      ${renderAdminRecordsTable(reportRecords)}
     </div>
   `;
 }
@@ -1251,12 +1338,45 @@ function downloadXlsxReport(records, filename, sheetName) {
     return;
   }
   const rows = buildReportRows(records);
-  const worksheet = XLSX.utils.json_to_sheet(rows, { header: REPORT_COLUMNS.map(([, label]) => label) });
-  worksheet['!cols'] = REPORT_COLUMNS.map(([, label]) => ({ wch: Math.max(label.length + 2, 18) }));
+  const headers = REPORT_COLUMNS.map(([, label]) => label);
+  const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
+  worksheet['!cols'] = REPORT_COLUMNS.map(([, label]) => ({ wch: Math.max(label.length + 4, 20) }));
+  applyWorksheetStyle(worksheet, headers.length, rows.length);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
   XLSX.writeFile(workbook, filename);
   showToast('Excel report downloaded');
+}
+
+function applyWorksheetStyle(worksheet, columnCount, rowCount) {
+  const border = {
+    top: { style: 'thin', color: { rgb: '808080' } },
+    bottom: { style: 'thin', color: { rgb: '808080' } },
+    left: { style: 'thin', color: { rgb: '808080' } },
+    right: { style: 'thin', color: { rgb: '808080' } }
+  };
+  const headerStyle = {
+    font: { bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '1A73E8' } },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border
+  };
+  const bodyStyle = {
+    alignment: { vertical: 'top', wrapText: true },
+    border
+  };
+  for (let c = 0; c < columnCount; c++) {
+    const headerCell = XLSX.utils.encode_cell({ r: 0, c });
+    if (worksheet[headerCell]) worksheet[headerCell].s = headerStyle;
+  }
+  for (let r = 1; r <= rowCount; r++) {
+    for (let c = 0; c < columnCount; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
+      worksheet[cellRef].s = bodyStyle;
+    }
+  }
+  worksheet['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rowCount, c: columnCount - 1 } }) };
 }
 
 function downloadMyReport() {
@@ -1268,7 +1388,8 @@ function downloadMyReport() {
 
 function downloadAdminReport() {
   if (!currentUser?.admin) return;
-  downloadXlsxReport(cloudRecords, `sales-visit-all-users-${new Date().toISOString().slice(0,10)}.xlsx`, 'All Visits');
+  const date = getAdminReportDate() || 'all-dates';
+  downloadXlsxReport(getAdminReportRecords(), `sales-visit-all-users-${date}.xlsx`, 'All Visits');
 }
 
 function fmtDT(dt) {
