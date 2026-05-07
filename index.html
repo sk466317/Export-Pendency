@@ -1,17 +1,1297 @@
-function isChaMatch(cha) {
-    // CHA Correction Logic
-    if (cha === "R.B.RAMNATH & SONS PVT LTD" || cha === "RB RAM NATH LAMBAH & SONS") {
-        return true;
-    }
-    // Existing logic...
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Sales Visit</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1A73E8;
+    --primary-dark: #0d47a1;
+    --accent: #FF6D00;
+    --bg: #F0F4FF;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7a99;
+    --border: #dce3f5;
+    --success: #00c853;
+    --shadow: 0 4px 24px rgba(26,115,232,0.13);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  /* ===== LOGIN SCREEN ===== */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #1A73E8 0%, #0d47a1 60%, #FF6D00 140%);
+    padding: 32px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #loginScreen::before {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+    top: -80px; right: -80px;
+  }
+  #loginScreen::after {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,109,0,0.18);
+    bottom: -60px; left: -40px;
+  }
+
+  .login-logo {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+  .login-sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.85rem;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+  }
+  .login-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 24px;
+    padding: 32px 24px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    z-index: 1;
+  }
+  .login-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .login-hint { color: var(--muted); font-size: 0.83rem; margin-bottom: 24px; }
+
+  .user-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .user-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 10px;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Baloo 2', cursive;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .user-btn:hover, .user-btn.selected {
+    border-color: var(--primary);
+    background: #e8f0fe;
+    color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(26,115,232,0.15);
+  }
+  .user-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    font-family: 'Baloo 2', cursive;
+    color: #fff;
+  }
+
+  .login-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+    box-shadow: 0 6px 20px rgba(26,115,232,0.35);
+  }
+  .login-btn:active { transform: scale(0.97); }
+  .login-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ===== MAIN APP ===== */
+  #appScreen { display: none; min-height: 100vh; flex-direction: column; }
+
+  .top-bar {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding: 16px 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .top-bar-left { display: flex; flex-direction: column; }
+  .top-bar-greeting {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 400;
+  }
+  .top-bar-name {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .top-bar-right { display: flex; align-items: center; gap: 10px; }
+  .logout-btn {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 10px;
+    padding: 6px 13px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .logout-btn:active { background: rgba(255,255,255,0.3); }
+
+  .icon-btn {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    font-size: 1.05rem;
+    cursor: pointer;
+  }
+  .bell-count {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #E53935;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Tab nav */
+  .tab-bar {
+    display: flex;
+    background: var(--card);
+    border-bottom: 2px solid var(--border);
+    position: sticky; top: 73px; z-index: 99;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 12px 6px;
+    border: none;
+    background: transparent;
+    font-family: 'Baloo 2', cursive;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .tab-btn.admin-only { display: none; }
+
+  /* Content */
+  .tab-content { display: none; padding: 20px 16px 100px; }
+  .tab-content.active { display: block; }
+
+  /* Form elements */
+  .form-section {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .section-label {
+    font-family: 'Baloo 2', cursive;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  .field-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+  .field-label:first-of-type { margin-top: 0; }
+
+  input[type="text"], input[type="password"], input[type="datetime-local"], input[type="date"], textarea, select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'Noto Sans', sans-serif;
+    font-size: 0.92rem;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,115,232,0.1);
+    background: #fff;
+  }
+  textarea { min-height: 90px; resize: none; }
+
+  .password-box {
+    margin-bottom: 18px;
+  }
+  .password-error {
+    min-height: 18px;
+    margin-top: 6px;
+    color: #C62828;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .location-row {
+    display: flex; gap: 8px;
+  }
+  .location-row input { flex: 1; }
+  .loc-btn {
+    padding: 12px 13px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .loc-btn:active { background: var(--primary-dark); }
+
+  .pick-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 14px;
+    background: var(--bg);
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pick-btn:active { background: #e8f0fe; border-color: var(--primary); }
+
+  /* Submit button */
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), #e65100);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(255,109,0,0.35);
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+    margin-top: 8px;
+  }
+  .submit-btn:active { transform: scale(0.97); }
+
+  /* Records */
+  .record-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary);
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .record-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .record-location {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .record-date {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .record-detail {
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+  }
+  .record-detail strong { color: var(--text); }
+  .record-detail.block {
+    align-items: flex-start;
+    line-height: 1.45;
+  }
+  .record-actions {
+    display: flex; gap: 8px; margin-top: 12px;
+  }
+  .use-record-btn {
+    flex: 1;
+    padding: 8px;
+    background: #e8f0fe;
+    color: var(--primary);
+    border: none;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Baloo 2', cursive;
+  }
+  .use-record-btn:active { background: var(--border); }
+
+  /* Toast */
+  #toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%; transform: translateX(-50%);
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 100px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 999;
+    white-space: nowrap;
+    max-width: 90vw;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Floating save bar */
+  .save-bar {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: var(--card);
+    border-top: 1.5px solid var(--border);
+    padding: 12px 16px;
+    display: none;
+    z-index: 200;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+  }
+  .empty-state .emoji { font-size: 2.5rem; margin-bottom: 10px; }
+  .empty-state p { font-size: 0.88rem; }
+
+  /* Modal for old record picker */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 500;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 16px 36px;
+    width: 100%; max-width: 430px;
+    margin: 0 auto;
+    max-height: 75vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-close {
+    background: var(--bg);
+    border: none;
+    border-radius: 50%;
+    width: 30px; height: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .notification-item {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 0;
+  }
+  .notification-item:last-child { border-bottom: none; }
+  .notification-user {
+    font-family: 'Baloo 2', cursive;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 3px;
+  }
+  .notification-meta {
+    font-size: 0.74rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Colors for avatars */
+  .c0 { background: #1A73E8; }
+  .c1 { background: #E53935; }
+  .c2 { background: #00897B; }
+  .c3 { background: #8E24AA; }
+  .c4 { background: #FF6D00; }
+  .c5 { background: #2E7D32; }
+  .c6 { background: #C62828; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-logo">📊 SalesTrack</div>
+  <div class="login-sub">Sales Visit Management</div>
+  <div class="login-card">
+    <div class="login-title">Select Your Name</div>
+    <div class="login-hint">Tap your name and enter your password to login</div>
+    <div class="user-grid" id="userGrid"></div>
+    <div class="password-box">
+      <div class="field-label">Password</div>
+      <input type="password" id="passwordInput" placeholder="Enter password..." autocomplete="current-password">
+      <div class="password-error" id="passwordError"></div>
+    </div>
+    <button class="login-btn" id="loginBtn" disabled onclick="doLogin()">Login →</button>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appScreen">
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <span class="top-bar-greeting">Welcome</span>
+      <span class="top-bar-name" id="topBarName">—</span>
+    </div>
+    <div class="top-bar-right">
+      <button class="icon-btn" onclick="openNotifications()" title="Notifications">🔔<span class="bell-count" id="bellCount">0</span></button>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('new')">➕ New Visit</button>
+    <button class="tab-btn" onclick="switchTab('records')">📋 Records</button>
+    <button class="tab-btn admin-only" id="adminTabBtn" onclick="switchTab('admin')">⬇️ Admin</button>
+  </div>
+
+  <!-- NEW VISIT TAB -->
+  <div class="tab-content active" id="tab-new">
+
+    <!-- Date Time -->
+    <div class="form-section">
+      <div class="section-label">Visit Details</div>
+      <div class="field-label">📅 Visit Date & Time</div>
+      <input type="datetime-local" id="visitDateTime">
+    </div>
+
+    <!-- Company -->
+    <div class="form-section">
+      <div class="section-label">Company</div>
+      <div class="field-label">🏢 Company Name</div>
+      <input type="text" id="companyName" list="companySuggestions" placeholder="Enter company name..." oninput="handleCompanyChange()" onchange="handleCompanyChange()" autocomplete="off">
+      <datalist id="companySuggestions"></datalist>
+
+      <div class="field-label">Type</div>
+      <select id="companyType">
+        <option value="">Select type...</option>
+        <option value="Exporter">Exporter</option>
+        <option value="Importer">Importer</option>
+        <option value="Freight Forwarder">Freight Forwarder</option>
+        <option value="CHA">CHA</option>
+        <option value="Shipping Line">Shipping Line</option>
+      </select>
+    </div>
+
+    <!-- Location -->
+    <div class="form-section">
+      <div class="section-label">Location</div>
+      <div class="field-label">📍 Location</div>
+      <div class="location-row">
+        <input type="text" id="locationInput" placeholder="Enter location...">
+        <button class="loc-btn" onclick="getCurrentLocation()" title="Current Location">🎯</button>
+      </div>
+    </div>
+
+    <!-- Contact & Meeting -->
+    <div class="form-section">
+      <div class="section-label">Contact Info</div>
+
+      <div class="field-label">👤 Contact Person</div>
+      <input type="text" id="contactPerson" placeholder="Enter contact name...">
+
+      <div style="margin-top:10px">
+        <button class="pick-btn" onclick="openOldRecord('contact')">
+          📂 Pick from old records
+        </button>
+      </div>
+
+      <div class="field-label" style="margin-top:16px">🗓️ Meeting Close Date & Time</div>
+      <input type="datetime-local" id="meetingClose">
+
+      <div class="field-label">🕐 Last Visit Date & Time</div>
+      <input type="datetime-local" id="lastVisit">
+      <div style="margin-top:8px">
+        <button class="pick-btn" onclick="openOldRecord('lastvisit')">
+          📂 Pick last visit from the same company
+        </button>
+      </div>
+    </div>
+
+    <!-- Remarks -->
+    <div class="form-section">
+      <div class="section-label">Remarks</div>
+      <div class="field-label">💬 Notes / Remarks</div>
+      <textarea id="remarks" placeholder="Write notes here..."></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="saveVisit()">✅ Save Visit</button>
+  </div>
+
+  <!-- RECORDS TAB -->
+  <div class="tab-content" id="tab-records">
+    <div class="form-section">
+      <div class="section-label">My Report</div>
+      <div class="record-detail block">Download your own complete visit data as an Excel .xlsx file.</div>
+      <button class="submit-btn" onclick="downloadMyReport()">⬇️ Download My Excel Report</button>
+    </div>
+    <div id="recordsList"></div>
+  </div>
+
+  <!-- ADMIN TAB -->
+  <div class="tab-content" id="tab-admin">
+    <div class="form-section">
+      <div class="section-label">Admin Report</div>
+      <div class="record-detail block">Damanjit can download complete visit data for all users, including the hidden saved date and time.</div>
+      <button class="submit-btn" onclick="downloadAdminReport()">⬇️ Download Excel Report</button>
+    </div>
+    <div id="adminSummary"></div>
+  </div>
+</div>
+
+<!-- Old Record Modal -->
+<div class="modal-overlay" id="recordModal" onclick="closeModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">
+      <span>Choose Record</span>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal-overlay" id="notificationModal" onclick="closeNotificationModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">
+      <span>Notifications</span>
+      <button class="modal-close" onclick="closeNotificationModalDirect()">✕</button>
+    </div>
+    <div id="notificationContent"></div>
+  </div>
+</div>
+
+<div id="toast">✓ Saved!</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDD1_lt0NPPcCdqCFFcQiShuEqATcCeyHY",
+  authDomain: "invo-56d4d.firebaseapp.com",
+  projectId: "invo-56d4d",
+  storageBucket: "invo-56d4d.firebasestorage.app",
+  messagingSenderId: "324568889132",
+  appId: "1:324568889132:web:f42696b453db97f1e6de89",
+  measurementId: "G-J589GLB45F"
+};
+
+try {
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  try {
+    await signInAnonymously(auth);
+  } catch (authErr) {
+    console.warn('Anonymous Firebase auth failed:', authErr);
+  }
+  const db = getFirestore(app);
+  window.salesVisitFirebase = {
+    db,
+    visitsRef: collection(db, 'sales_visits'),
+    addDoc,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    orderBy,
+    query,
+    serverTimestamp,
+    ready: true
+  };
+  window.dispatchEvent(new Event('salesVisitFirebaseReady'));
+} catch (err) {
+  console.error('Firebase init failed:', err);
+  window.salesVisitFirebase = { ready: false, error: err };
+}
+</script>
+
+<script>
+const USERS = [
+  { name: 'Anurag', password: 'ANURAG1', color: 'c0' },
+  { name: 'Harsimran', password: 'HARSIMRAN1', color: 'c1' },
+  { name: 'Damanjit', password: 'DAMANJIT1', color: 'c2', admin: true },
+  { name: 'Mohik', password: 'MOHIK', color: 'c3' },
+  { name: 'Chirag', password: 'CHIRAG1', color: 'c4' },
+  { name: 'Kunal', password: 'KUNAL1', color: 'c5' },
+  { name: 'Rajesh', password: 'RAJESH1', color: 'c6' },
+];
+
+let currentUser = null;
+let selectedUser = null;
+let modalTarget = null;
+let cloudRecords = [];
+let visitsUnsubscribe = null;
+let notificationsReady = false;
+let notifications = [];
+let unreadNotifications = 0;
+const DEVICE_ID = getDeviceId();
+
+// Build user grid
+const grid = document.getElementById('userGrid');
+USERS.forEach((u, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'user-btn';
+  btn.innerHTML = `<div class="user-avatar ${u.color}">${u.name[0]}</div>${u.name}`;
+  btn.onclick = () => selectUser(u, btn);
+  grid.appendChild(btn);
+});
+document.getElementById('passwordInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+function selectUser(u, btn) {
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedUser = u;
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('passwordError').textContent = '';
+  document.getElementById('passwordInput').focus();
 }
 
-function isShipperMatch(shipper) {
-    // SHIPPER Correction Logic
-    if (shipper === "B.V.ENTERPRSIES" || shipper === "BV ENTERPRISES" || shipper === "DASMESH MECHANICAL WORKS PROP. SWARNJIT" || shipper === "DASHMESH MECHANICAL WORKS") {
-        return true;
-    }
-    // Existing logic...
-} 
+function doLogin() {
+  if (!selectedUser) return;
+  const password = document.getElementById('passwordInput').value.trim().toUpperCase();
+  if (password !== selectedUser.password) {
+    document.getElementById('passwordError').textContent = 'Wrong password. Please try again.';
+    return;
+  }
+  currentUser = selectedUser;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'flex';
+  document.getElementById('topBarName').textContent = currentUser.name;
+  document.getElementById('adminTabBtn').style.display = currentUser.admin ? 'block' : 'none';
+  requestNotificationAccess();
+  startCloudRecords();
+  // Set current datetime
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  document.getElementById('visitDateTime').value = local;
+  renderRecords();
+}
 
-// Additional existing code...
+function logout() {
+  currentUser = null; selectedUser = null;
+  stopCloudRecords();
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display = 'none';
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('loginBtn').disabled = true;
+  document.getElementById('adminTabBtn').style.display = 'none';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordError').textContent = '';
+  clearForm();
+}
+
+function switchTab(tab) {
+  if (tab === 'admin' && !currentUser?.admin) return;
+  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const btn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+  if (btn) btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'records') renderRecords();
+  if (tab === 'admin') renderAdminSummary();
+}
+
+function getCurrentLocation() {
+  const btn = document.querySelector('.loc-btn');
+  btn.textContent = '⏳';
+  if (!navigator.geolocation) { showToast('Geolocation is not supported'); btn.textContent = '🎯'; return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude, longitude } = pos.coords;
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+      .then(r => r.json())
+      .then(d => {
+        const addr = d.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        document.getElementById('locationInput').value = addr;
+        showToast('📍 Location found!');
+      })
+      .catch(() => {
+        document.getElementById('locationInput').value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        showToast('📍 Coordinates set!');
+      })
+      .finally(() => btn.textContent = '🎯');
+  }, () => { showToast('Location access denied'); btn.textContent = '🎯'; });
+}
+
+async function saveVisit() {
+  const vdt = document.getElementById('visitDateTime').value;
+  const company = document.getElementById('companyName').value.trim();
+  const companyType = document.getElementById('companyType').value;
+  const loc = document.getElementById('locationInput').value.trim();
+  const contact = document.getElementById('contactPerson').value.trim();
+  if (!vdt || !company || !companyType || !loc || !contact) {
+    showToast('⚠️ Date, company, type, location and contact are required'); return;
+  }
+  const savedAtLocal = new Date().toISOString();
+  const record = {
+    id: Date.now(),
+    user: currentUser.name,
+    visitDateTime: vdt,
+    companyName: company,
+    companyType,
+    location: loc,
+    contactPerson: contact,
+    meetingClose: document.getElementById('meetingClose').value,
+    lastVisit: document.getElementById('lastVisit').value,
+    remarks: document.getElementById('remarks').value.trim(),
+    deviceId: DEVICE_ID,
+    savedAt: savedAtLocal,
+    savedAtLocal
+  };
+  try {
+    if (!window.salesVisitFirebase?.ready) throw new Error('Firebase is not ready');
+    await window.salesVisitFirebase.addDoc(window.salesVisitFirebase.visitsRef, {
+      ...record,
+      savedAt: window.salesVisitFirebase.serverTimestamp(),
+      savedAtLocal
+    });
+    saveLocalBackup(record);
+    showToast('✅ Visit saved to Firebase!');
+    clearForm();
+    setTimeout(() => switchTab('records'), 1200);
+  } catch (err) {
+    console.error('Firebase save failed:', err);
+    saveLocalBackup(record);
+    showToast('⚠️ Firebase issue. Local backup saved.');
+  }
+}
+
+function saveLocalBackup(record) {
+  const key = `visits_${record.user}`;
+  const all = JSON.parse(localStorage.getItem(key) || '[]');
+  all.unshift(record);
+  localStorage.setItem(key, JSON.stringify(all));
+}
+
+function startCloudRecords() {
+  if (visitsUnsubscribe || !currentUser) return;
+  const fb = window.salesVisitFirebase;
+  if (!fb?.ready) {
+    setTimeout(startCloudRecords, 700);
+    return;
+  }
+  notificationsReady = false;
+  const visitsQuery = fb.query(fb.visitsRef, fb.orderBy('savedAt', 'desc'));
+  visitsUnsubscribe = fb.onSnapshot(visitsQuery, snapshot => {
+    cloudRecords = snapshot.docs.map(d => normalizeCloudRecord(d));
+    notifications = cloudRecords.filter(isSavedToday).map(recordToNotification);
+    updateCompanySuggestions();
+    updateBellCount();
+    snapshot.docChanges().forEach(change => {
+      if (change.type !== 'added' || !notificationsReady || !currentUser) return;
+      const record = normalizeCloudRecord(change.doc);
+      if (record.deviceId === DEVICE_ID) return;
+      if (isSavedToday(record)) unreadNotifications += 1;
+      notifyVisit(record);
+    });
+    updateBellCount();
+    notificationsReady = true;
+    if (document.getElementById('tab-records').classList.contains('active')) renderRecords();
+    if (document.getElementById('tab-admin').classList.contains('active')) renderAdminSummary();
+  }, err => {
+    console.error('Firebase listener failed:', err);
+    showToast('⚠️ Firebase records could not load');
+  });
+}
+
+function stopCloudRecords() {
+  if (visitsUnsubscribe) visitsUnsubscribe();
+  visitsUnsubscribe = null;
+  notificationsReady = false;
+  cloudRecords = [];
+  notifications = [];
+  unreadNotifications = 0;
+  updateBellCount();
+}
+
+function normalizeCloudRecord(docSnap) {
+  const data = docSnap.data();
+  const savedDate = data.savedAt?.toDate ? data.savedAt.toDate().toISOString() : data.savedAtLocal || data.savedAt || '';
+  return { ...data, id: docSnap.id, savedAt: savedDate };
+}
+
+function notifyVisit(record) {
+  const title = `${record.user || 'Sales'} saved a location`;
+  const body = `${record.companyName ? record.companyName + ' - ' : ''}${record.location || 'Location update'}`;
+  showToast(`${title}: ${body}`);
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body });
+  }
+}
+
+function requestNotificationAccess() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+}
+
+function getDeviceId() {
+  const key = 'sales_visit_device_id';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+function clearForm() {
+  ['visitDateTime','companyName','companyType','locationInput','contactPerson','meetingClose','lastVisit','remarks']
+    .forEach(id => document.getElementById(id).value = '');
+  if (currentUser) {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    document.getElementById('visitDateTime').value = local;
+  }
+}
+
+function updateCompanySuggestions() {
+  const list = document.getElementById('companySuggestions');
+  const companies = [...new Set(cloudRecords.map(r => r.companyName).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  list.innerHTML = companies.map(name => `<option value="${escAttr(name)}"></option>`).join('');
+}
+
+function handleCompanyChange() {
+  const company = document.getElementById('companyName').value.trim().toLowerCase();
+  if (!company) return;
+  const match = cloudRecords
+    .filter(r => (r.companyName || '').trim().toLowerCase() === company)
+    .sort((a, b) => new Date(b.visitDateTime || b.savedAt || 0) - new Date(a.visitDateTime || a.savedAt || 0))[0];
+  if (!match) return;
+  if (match.companyType) document.getElementById('companyType').value = match.companyType;
+  if (match.visitDateTime) document.getElementById('lastVisit').value = match.visitDateTime;
+}
+
+function renderRecords() {
+  if (!currentUser) return;
+  const all = getUserRecords();
+  const container = document.getElementById('recordsList');
+  if (!all.length) {
+    container.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No visit records yet.<br>Add a new visit.</p></div>`;
+    return;
+  }
+  container.innerHTML = all.map(r => `
+    <div class="record-card">
+      <div class="record-header">
+        <div class="record-location">🏢 ${escHtml(r.companyName || 'Company not saved')}</div>
+        <div class="record-date">${fmtDT(r.visitDateTime)}</div>
+      </div>
+      <div class="record-detail">Type: <strong>${escHtml(r.companyType || '-')}</strong></div>
+      <div class="record-detail">📍 <strong>${escHtml(r.location)}</strong></div>
+      <div class="record-detail">👤 <strong>${escHtml(r.contactPerson)}</strong></div>
+      ${r.lastVisit ? `<div class="record-detail">🕐 Last Visit: <strong>${fmtDT(r.lastVisit)}</strong></div>` : ''}
+      ${r.meetingClose ? `<div class="record-detail">🗓️ Meeting Close: <strong>${fmtDT(r.meetingClose)}</strong></div>` : ''}
+      ${r.remarks ? `<div class="record-detail">💬 ${escHtml(r.remarks)}</div>` : ''}
+      <div class="record-detail">Saved: <strong>${fmtDT(r.savedAt)}</strong></div>
+      <div class="record-actions">
+        <button class="use-record-btn" onclick="useRecord('${escAttr(r.id)}')">📋 Fill form from this record</button>
+        <button class="use-record-btn" style="flex:0;padding:8px 12px;color:#E53935;background:#ffebee" onclick="deleteRecord('${escAttr(r.id)}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function getUserRecords() {
+  if (!currentUser) return [];
+  if (currentUser.admin && document.getElementById('tab-admin').classList.contains('active')) return cloudRecords;
+  const cloud = cloudRecords.filter(r => r.user === currentUser.name);
+  if (cloud.length || window.salesVisitFirebase?.ready) return cloud;
+  return JSON.parse(localStorage.getItem(`visits_${currentUser.name}`) || '[]');
+}
+
+function deleteLocalRecord(id) {
+  const key = `visits_${currentUser.name}`;
+  let all = JSON.parse(localStorage.getItem(key) || '[]');
+  all = all.filter(x => String(x.id) !== String(id));
+  localStorage.setItem(key, JSON.stringify(all));
+}
+
+function useRecord(id) {
+  const all = getUserRecords();
+  const r = all.find(x => String(x.id) === String(id));
+  if (!r) return;
+  document.getElementById('companyName').value = r.companyName || '';
+  document.getElementById('companyType').value = r.companyType || '';
+  document.getElementById('locationInput').value = r.location;
+  document.getElementById('contactPerson').value = r.contactPerson;
+  if (r.visitDateTime) document.getElementById('lastVisit').value = r.visitDateTime;
+  if (r.meetingClose) document.getElementById('meetingClose').value = r.meetingClose;
+  showToast('📋 Form filled from record!');
+  switchTab('new');
+}
+
+async function deleteRecord(id) {
+  if (!confirm('Delete this record?')) return;
+  try {
+    if (window.salesVisitFirebase?.ready && !/^\d+$/.test(String(id))) {
+      await window.salesVisitFirebase.deleteDoc(window.salesVisitFirebase.doc(window.salesVisitFirebase.db, 'sales_visits', id));
+    } else {
+      deleteLocalRecord(id);
+    }
+    renderRecords();
+    showToast('🗑️ Record deleted');
+  } catch (err) {
+    console.error('Delete failed:', err);
+    showToast('⚠️ Record could not be deleted');
+  }
+}
+
+// Modal for picking from old records
+function openOldRecord(target) {
+  modalTarget = target;
+  const all = getUserRecords();
+  const modal = document.getElementById('recordModal');
+  const content = document.getElementById('modalContent');
+  if (!all.length) {
+    content.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No old records found.</p></div>`;
+  } else {
+    const companyName = document.getElementById('companyName').value.trim().toLowerCase();
+    const filtered = target === 'lastvisit' && companyName
+      ? all.filter(r => (r.companyName || '').trim().toLowerCase() === companyName)
+      : all;
+    content.innerHTML = (filtered.length ? filtered : all).map(r => `
+      <div class="record-card" style="cursor:pointer" onclick="pickFromRecord('${escAttr(r.id)}')">
+        <div class="record-header">
+          <div class="record-location">🏢 ${escHtml(r.companyName || 'Company not saved')}</div>
+          <div class="record-date">${fmtDT(r.visitDateTime)}</div>
+        </div>
+        <div class="record-detail">📍 <strong>${escHtml(r.location || '-')}</strong></div>
+        <div class="record-detail">👤 <strong>${escHtml(r.contactPerson)}</strong></div>
+      </div>
+    `).join('');
+  }
+  modal.classList.add('open');
+}
+
+function pickFromRecord(id) {
+  const all = getUserRecords();
+  const r = all.find(x => String(x.id) === String(id));
+  if (!r) return;
+  if (modalTarget === 'contact') {
+    document.getElementById('contactPerson').value = r.contactPerson;
+    showToast('👤 Contact filled!');
+  } else if (modalTarget === 'lastvisit') {
+    document.getElementById('lastVisit').value = r.visitDateTime;
+    showToast('🕐 Last visit filled!');
+  }
+  closeModalDirect();
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('recordModal')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('recordModal').classList.remove('open');
+}
+
+function recordToNotification(record) {
+  return {
+    id: record.id,
+    user: record.user || 'Unknown',
+    companyName: record.companyName || '',
+    companyType: record.companyType || '',
+    location: record.location || '',
+    visitDateTime: record.visitDateTime || '',
+    savedAt: record.savedAt || record.savedAtLocal || ''
+  };
+}
+
+function isSavedToday(record) {
+  const dt = record.savedAt || record.savedAtLocal;
+  if (!dt) return false;
+  const saved = new Date(dt);
+  if (Number.isNaN(saved.getTime())) return false;
+  const today = new Date();
+  return saved.getFullYear() === today.getFullYear()
+    && saved.getMonth() === today.getMonth()
+    && saved.getDate() === today.getDate();
+}
+
+function updateBellCount() {
+  const badge = document.getElementById('bellCount');
+  if (!badge) return;
+  if (unreadNotifications > 0) {
+    badge.textContent = unreadNotifications > 99 ? '99+' : unreadNotifications;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openNotifications() {
+  unreadNotifications = 0;
+  updateBellCount();
+  renderNotifications();
+  document.getElementById('notificationModal').classList.add('open');
+}
+
+function renderNotifications() {
+  const content = document.getElementById('notificationContent');
+  if (!notifications.length) {
+    content.innerHTML = `<div class="empty-state"><div class="emoji">🔔</div><p>No notifications saved today.</p></div>`;
+    return;
+  }
+  const grouped = notifications.reduce((acc, item) => {
+    (acc[item.user] ||= []).push(item);
+    return acc;
+  }, {});
+  content.innerHTML = Object.keys(grouped).sort().map(user => `
+    <div class="notification-user">${escHtml(user)}</div>
+    ${grouped[user].map(item => `
+      <div class="notification-item">
+        <div><strong>${escHtml(item.companyName || 'Company not saved')}</strong></div>
+        <div class="record-detail">📍 ${escHtml(item.location || '-')}</div>
+        <div class="record-detail">Type: ${escHtml(item.companyType || '-')}</div>
+        <div class="notification-meta">Visit: ${fmtDT(item.visitDateTime)} | Saved: ${fmtDT(item.savedAt)}</div>
+      </div>
+    `).join('')}
+  `).join('');
+}
+
+function closeNotificationModal(e) {
+  if (e.target === document.getElementById('notificationModal')) closeNotificationModalDirect();
+}
+function closeNotificationModalDirect() {
+  document.getElementById('notificationModal').classList.remove('open');
+}
+
+function renderAdminSummary() {
+  if (!currentUser?.admin) return;
+  const box = document.getElementById('adminSummary');
+  if (!cloudRecords.length) {
+    box.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No records available for report.</p></div>`;
+    return;
+  }
+  const userCounts = cloudRecords.reduce((acc, r) => {
+    acc[r.user || 'Unknown'] = (acc[r.user || 'Unknown'] || 0) + 1;
+    return acc;
+  }, {});
+  box.innerHTML = `
+    <div class="form-section">
+      <div class="section-label">Report Summary</div>
+      <div class="record-detail">Total Records: <strong>${cloudRecords.length}</strong></div>
+      ${Object.keys(userCounts).sort().map(user => `<div class="record-detail">${escHtml(user)}: <strong>${userCounts[user]}</strong></div>`).join('')}
+    </div>
+  `;
+}
+
+const REPORT_COLUMNS = [
+  ['user', 'User'],
+  ['companyName', 'Company Name'],
+  ['companyType', 'Type'],
+  ['location', 'Location'],
+  ['contactPerson', 'Contact Person'],
+  ['visitDateTime', 'Visit Date & Time'],
+  ['lastVisit', 'Last Visit Date & Time'],
+  ['meetingClose', 'Meeting Close Date & Time'],
+  ['remarks', 'Remarks'],
+  ['savedAt', 'Saved Date & Time']
+];
+const REPORT_DATE_KEYS = new Set(['visitDateTime', 'lastVisit', 'meetingClose', 'savedAt']);
+
+function buildReportRows(records) {
+  return records.map(record => {
+    const row = {};
+    REPORT_COLUMNS.forEach(([key, label]) => {
+      row[label] = REPORT_DATE_KEYS.has(key) ? fmtDT(record[key]) : (record[key] || '');
+    });
+    return row;
+  });
+}
+
+function downloadXlsxReport(records, filename, sheetName) {
+  if (!records.length) {
+    showToast('No data available to download');
+    return;
+  }
+  if (!window.XLSX) {
+    showToast('Excel library is still loading. Please try again.');
+    return;
+  }
+  const rows = buildReportRows(records);
+  const worksheet = XLSX.utils.json_to_sheet(rows, { header: REPORT_COLUMNS.map(([, label]) => label) });
+  worksheet['!cols'] = REPORT_COLUMNS.map(([, label]) => ({ wch: Math.max(label.length + 2, 18) }));
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+  XLSX.writeFile(workbook, filename);
+  showToast('Excel report downloaded');
+}
+
+function downloadMyReport() {
+  if (!currentUser) return;
+  const records = getUserRecords();
+  const safeName = currentUser.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  downloadXlsxReport(records, `sales-visit-${safeName}-${new Date().toISOString().slice(0,10)}.xlsx`, 'My Visits');
+}
+
+function downloadAdminReport() {
+  if (!currentUser?.admin) return;
+  downloadXlsxReport(cloudRecords, `sales-visit-all-users-${new Date().toISOString().slice(0,10)}.xlsx`, 'All Visits');
+}
+
+function fmtDT(dt) {
+  if (!dt) return '-';
+  const d = new Date(dt);
+  if (Number.isNaN(d.getTime())) return dt;
+  return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
+
+function escHtml(s) {
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escAttr(s) {
+  return escHtml(String(s || '')).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
