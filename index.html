@@ -1,1481 +1,1271 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Sales Visit</title>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --primary: #1A73E8;
-    --primary-dark: #0d47a1;
-    --accent: #FF6D00;
-    --bg: #F0F4FF;
-    --card: #ffffff;
-    --text: #1a1a2e;
-    --muted: #6b7a99;
-    --border: #dce3f5;
-    --success: #00c853;
-    --shadow: 0 4px 24px rgba(26,115,232,0.13);
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSC Report Generator & Filter Portal</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- SheetJS & ExcelJS for Exact Styled Excel Export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
-  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0b1120 0%, #0f172a 50%, #1e293b 100%);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-glow: rgba(37, 99, 235, 0.35);
+      --accent: #10b981;
+      --accent-glow: rgba(16, 185, 129, 0.3);
+      --excel-header: #002D62; /* Navy Blue matching screenshot */
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+      --transition: all 0.2s ease-in-out;
+    }
 
-  body {
-    font-family: 'Noto Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    max-width: 430px;
-    margin: 0 auto;
-    overflow-x: hidden;
-  }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* ===== LOGIN SCREEN ===== */
-  #loginScreen {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(145deg, #1A73E8 0%, #0d47a1 60%, #FF6D00 140%);
-    padding: 32px 24px;
-    position: relative;
-    overflow: hidden;
-  }
+    body {
+      font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px 20px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
 
-  #loginScreen::before {
-    content: '';
-    position: absolute;
-    width: 300px; height: 300px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.07);
-    top: -80px; right: -80px;
-  }
-  #loginScreen::after {
-    content: '';
-    position: absolute;
-    width: 200px; height: 200px;
-    border-radius: 50%;
-    background: rgba(255,109,0,0.18);
-    bottom: -60px; left: -40px;
-  }
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
 
-  .login-logo {
-    font-family: 'Baloo 2', cursive;
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -1px;
-    margin-bottom: 4px;
-  }
-  .login-sub {
-    color: rgba(255,255,255,0.7);
-    font-size: 0.85rem;
-    margin-bottom: 40px;
-    letter-spacing: 0.5px;
-  }
-  .login-card {
-    background: rgba(255,255,255,0.97);
-    border-radius: 24px;
-    padding: 32px 24px;
-    width: 100%;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-    z-index: 1;
-  }
-  .login-title {
-    font-family: 'Baloo 2', cursive;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 6px;
-  }
-  .login-hint { color: var(--muted); font-size: 0.83rem; margin-bottom: 24px; }
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
 
-  .login-select-box {
-    margin-bottom: 18px;
-  }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
 
-  .user-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .user-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 14px 10px;
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    background: var(--bg);
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: 'Baloo 2', cursive;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text);
-  }
-  .user-btn:hover, .user-btn.selected {
-    border-color: var(--primary);
-    background: #e8f0fe;
-    color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(26,115,232,0.15);
-  }
-  .user-avatar {
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem;
-    font-weight: 800;
-    font-family: 'Baloo 2', cursive;
-    color: #fff;
-  }
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      background: #002D62;
+      border: 2px solid #3b82f6;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
 
-  .login-btn {
-    width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-family: 'Baloo 2', cursive;
-    font-size: 1.1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.5px;
-    box-shadow: 0 6px 20px rgba(26,115,232,0.35);
-  }
-  .login-btn:active { transform: scale(0.97); }
-  .login-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .brand-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #ffffff;
+    }
 
-  /* ===== MAIN APP ===== */
-  #appScreen { display: none; min-height: 100vh; flex-direction: column; }
+    .brand-text p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
 
-  .top-bar {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    padding: 16px 20px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .top-bar-left { display: flex; flex-direction: column; }
-  .top-bar-greeting {
-    font-size: 0.75rem;
-    color: rgba(255,255,255,0.7);
-    font-weight: 400;
-  }
-  .top-bar-name {
-    font-family: 'Baloo 2', cursive;
-    font-size: 1.25rem;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.2;
-  }
-  .top-bar-right { display: flex; align-items: center; gap: 10px; }
-  .logout-btn {
-    background: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: #fff;
-    border-radius: 10px;
-    padding: 6px 13px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .logout-btn:active { background: rgba(255,255,255,0.3); }
+    .header-badges {
+      display: flex;
+      gap: 10px;
+    }
 
-  .icon-btn {
-    position: relative;
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.3);
-    background: rgba(255,255,255,0.18);
-    color: #fff;
-    font-size: 1.05rem;
-    cursor: pointer;
-  }
-  .bell-count {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 999px;
-    background: #E53935;
-    color: #fff;
-    font-size: 0.68rem;
-    font-weight: 800;
-    display: none;
-    align-items: center;
-    justify-content: center;
-  }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 20px;
+      background: rgba(37, 99, 235, 0.15);
+      border: 1px solid rgba(37, 99, 235, 0.4);
+      color: #93c5fd;
+    }
 
-  /* Tab nav */
-  .tab-bar {
-    display: flex;
-    background: var(--card);
-    border-bottom: 2px solid var(--border);
-    position: sticky; top: 73px; z-index: 99;
-  }
-  .tab-btn {
-    flex: 1;
-    padding: 12px 6px;
-    border: none;
-    background: transparent;
-    font-family: 'Baloo 2', cursive;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s;
-  }
-  .tab-btn.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-  }
-  .tab-btn.admin-only { display: none; }
+    .badge.green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #6ee7b7;
+    }
 
-  /* Content */
-  .tab-content { display: none; padding: 20px 16px 100px; }
-  .tab-content.active { display: block; }
+    /* Top Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
 
-  /* Form elements */
-  .form-section {
-    background: var(--card);
-    border-radius: 18px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: var(--shadow);
-  }
-  .section-label {
-    font-family: 'Baloo 2', cursive;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--primary);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .section-label::before {
-    content: '';
-    display: inline-block;
-    width: 3px; height: 14px;
-    background: var(--accent);
-    border-radius: 2px;
-  }
+    @media (max-width: 768px) {
+      .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
 
-  .field-label {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--muted);
-    margin-bottom: 6px;
-    margin-top: 14px;
-  }
-  .field-label:first-of-type { margin-top: 0; }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
 
-  input[type="text"], input[type="password"], input[type="datetime-local"], input[type="date"], textarea, select {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    font-family: 'Noto Sans', sans-serif;
-    font-size: 0.92rem;
-    color: var(--text);
-    background: var(--bg);
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-appearance: none;
-  }
-  input:focus, textarea:focus, select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(26,115,232,0.1);
-    background: #fff;
-  }
-  textarea { min-height: 90px; resize: none; }
+    .stat-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
 
-  .password-box {
-    margin-bottom: 18px;
-  }
-  .password-error {
-    min-height: 18px;
-    margin-top: 6px;
-    color: #C62828;
-    font-size: 0.78rem;
-    font-weight: 600;
-  }
+    .stat-icon.blue { background: rgba(59, 130, 246, 0.18); color: #60a5fa; }
+    .stat-icon.green { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+    .stat-icon.purple { background: rgba(168, 85, 247, 0.18); color: #c084fc; }
+    .stat-icon.amber { background: rgba(245, 158, 11, 0.18); color: #fbbf24; }
 
-  .location-row {
-    display: flex; gap: 8px;
-  }
-  .location-row input { flex: 1; }
-  .loc-btn {
-    padding: 12px 13px;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    white-space: nowrap;
-  }
-  .loc-btn:active { background: var(--primary-dark); }
+    .stat-info h4 {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 3px;
+    }
 
-  .pick-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 11px 14px;
-    background: var(--bg);
-    border: 1.5px dashed var(--border);
-    border-radius: 12px;
-    font-size: 0.85rem;
-    color: var(--primary);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .pick-btn:active { background: #e8f0fe; border-color: var(--primary); }
+    .stat-info .num {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
 
-  /* Submit button */
-  .submit-btn {
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--accent), #e65100);
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-family: 'Baloo 2', cursive;
-    font-size: 1.15rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(255,109,0,0.35);
-    transition: all 0.2s;
-    letter-spacing: 0.3px;
-    margin-top: 8px;
-  }
-  .submit-btn:active { transform: scale(0.97); }
+    /* Main Grid */
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
 
-  /* Records */
-  .record-card {
-    background: var(--card);
-    border-radius: 16px;
-    padding: 16px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow);
-    border-left: 4px solid var(--primary);
-    animation: slideIn 0.3s ease;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .record-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 10px;
-  }
-  .record-location {
-    font-family: 'Baloo 2', cursive;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--text);
-  }
-  .record-date {
-    font-size: 0.72rem;
-    color: var(--muted);
-    text-align: right;
-  }
-  .record-detail {
-    font-size: 0.8rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 4px;
-  }
-  .record-detail strong { color: var(--text); }
-  .record-detail.block {
-    align-items: flex-start;
-    line-height: 1.45;
-  }
-  .record-actions {
-    display: flex; gap: 8px; margin-top: 12px;
-  }
-  .use-record-btn {
-    flex: 1;
-    padding: 8px;
-    background: #e8f0fe;
-    color: var(--primary);
-    border: none;
-    border-radius: 10px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-family: 'Baloo 2', cursive;
-  }
-  .use-record-btn:active { background: var(--border); }
+    @media (max-width: 1024px) {
+      .grid-main {
+        grid-template-columns: 1fr;
+      }
+    }
 
-  /* Toast */
-  #toast {
-    position: fixed;
-    bottom: 80px;
-    left: 50%; transform: translateX(-50%);
-    background: #1a1a2e;
-    color: #fff;
-    padding: 12px 24px;
-    border-radius: 100px;
-    font-size: 0.88rem;
-    font-weight: 500;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-    z-index: 999;
-    white-space: nowrap;
-    max-width: 90vw;
-  }
-  #toast.show { opacity: 1; }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
 
-  .saving-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1200;
-    background: rgba(10, 20, 40, 0.48);
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  .saving-overlay.open { display: flex; }
-  .saving-box {
-    width: min(280px, 92vw);
-    background: #fff;
-    border-radius: 18px;
-    padding: 24px 20px;
-    text-align: center;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.22);
-  }
-  .saving-spinner {
-    width: 38px;
-    height: 38px;
-    border: 4px solid #dce3f5;
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    margin: 0 auto 14px;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .saving-title {
-    font-family: 'Baloo 2', cursive;
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--text);
-  }
-  .saving-sub {
-    margin-top: 3px;
-    color: var(--muted);
-    font-size: 0.82rem;
-  }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 10px;
+    }
 
-  /* Floating save bar */
-  .save-bar {
-    position: fixed;
-    bottom: 0; left: 50%;
-    transform: translateX(-50%);
-    width: 100%; max-width: 430px;
-    background: var(--card);
-    border-top: 1.5px solid var(--border);
-    padding: 12px 16px;
-    display: none;
-    z-index: 200;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-  }
+    .card-title svg {
+      color: #60a5fa;
+    }
 
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-  }
-  .empty-state .emoji { font-size: 2.5rem; margin-bottom: 10px; }
-  .empty-state p { font-size: 0.88rem; }
+    /* Upload Zone */
+    .upload-zone {
+      border: 2px dashed rgba(59, 130, 246, 0.4);
+      border-radius: var(--radius-sm);
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(15, 23, 42, 0.5);
+      transition: var(--transition);
+      position: relative;
+    }
 
-  /* Modal for old record picker */
-  .modal-overlay {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 500;
-    align-items: flex-end;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal-sheet {
-    background: var(--card);
-    border-radius: 24px 24px 0 0;
-    padding: 20px 16px 36px;
-    width: 100%; max-width: 430px;
-    margin: 0 auto;
-    max-height: 75vh;
-    overflow-y: auto;
-    animation: slideUp 0.3s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-  .modal-title {
-    font-family: 'Baloo 2', cursive;
-    font-size: 1.15rem;
-    font-weight: 700;
-    margin-bottom: 16px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .modal-close {
-    background: var(--bg);
-    border: none;
-    border-radius: 50%;
-    width: 30px; height: 30px;
-    font-size: 1rem;
-    cursor: pointer;
-  }
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px var(--primary-glow);
+    }
 
-  .notification-item {
-    border-bottom: 1px solid var(--border);
-    padding: 12px 0;
-  }
-  .notification-item:last-child { border-bottom: none; }
-  .notification-user {
-    font-family: 'Baloo 2', cursive;
-    font-weight: 800;
-    color: var(--primary);
-    margin-bottom: 3px;
-  }
-  .notification-meta {
-    font-size: 0.74rem;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-  .admin-table-wrap {
-    width: 100%;
-    overflow-x: auto;
-    margin-top: 12px;
-  }
-  .admin-table {
-    width: 100%;
-    min-width: 760px;
-    border-collapse: collapse;
-    font-size: 0.68rem;
-    background: #fff;
-  }
-  .admin-table th,
-  .admin-table td {
-    border: 1px solid var(--border);
-    padding: 6px 7px;
-    text-align: left;
-    vertical-align: top;
-    white-space: nowrap;
-  }
-  .admin-table th {
-    background: #e8f0fe;
-    color: var(--primary-dark);
-    font-weight: 800;
-  }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
 
-  /* Colors for avatars */
-  .c0 { background: #1A73E8; }
-  .c1 { background: #E53935; }
-  .c2 { background: #00897B; }
-  .c3 { background: #8E24AA; }
-  .c4 { background: #FF6D00; }
-  .c5 { background: #2E7D32; }
-  .c6 { background: #C62828; }
-</style>
+    .upload-icon {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 12px;
+      background: rgba(59, 130, 246, 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #60a5fa;
+    }
+
+    .upload-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 4px;
+    }
+
+    .upload-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    .upload-file-info {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 14px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius-sm);
+      color: #a7f3d0;
+      font-size: 12.5px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Filter Controls */
+    .filter-group {
+      margin-bottom: 14px;
+    }
+
+    .filter-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .consignee-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 6px;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    .consignee-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #cbd5e1;
+    }
+
+    .consignee-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .consignee-item input[type="checkbox"] {
+      accent-color: #3b82f6;
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+
+    .consignee-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-sub {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-muted);
+      padding: 2px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-sub:hover {
+      color: #fff;
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+    }
+
+    /* Actions Bar */
+    .actions-bar {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 22px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #fff;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #1e40af, #1d4ed8);
+      transform: translateY(-1px);
+    }
+
+    .btn-excel {
+      background: linear-gradient(135deg, #0f3b66, #002D62);
+      border: 1px solid #3b82f6;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0, 45, 98, 0.5);
+    }
+
+    .btn-excel:hover:not(:disabled) {
+      background: linear-gradient(135deg, #002D62, #001f44);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+    }
+
+    .btn-outlook {
+      background: linear-gradient(135deg, #0078d4, #106ebe);
+      border: 1px solid #2b88d8;
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(0, 120, 212, 0.4);
+    }
+
+    .btn-outlook:hover:not(:disabled) {
+      background: linear-gradient(135deg, #106ebe, #005a9e);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 120, 212, 0.55);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Preview Table Container - MATCHING SCREENSHOT EXACTLY */
+    .table-container {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .table-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: #0f172a;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .search-box {
+      width: 260px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 6px 12px 6px 30px;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    .table-scroll {
+      max-height: 520px;
+      overflow-x: auto;
+      overflow-y: auto;
+      background: #ffffff;
+    }
+
+    /* Exactly like Excel in Screenshot */
+    table.excel-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 11.5px;
+      color: #000000;
+      white-space: nowrap;
+    }
+
+    /* Deep Navy Blue Header with White Text */
+    table.excel-table thead th {
+      background-color: #002D62 !important; /* Screenshot exact color */
+      color: #ffffff !important;
+      font-weight: 700;
+      padding: 8px 10px;
+      border: 1px solid #1e40af;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      text-align: left;
+      font-size: 11.5px;
+      letter-spacing: 0.2px;
+    }
+
+    table.excel-table tbody td {
+      padding: 6px 9px;
+      border: 1px solid #d1d5db; /* Light gray cell gridline like Excel */
+      background: #ffffff;
+      color: #111827;
+      font-size: 11.5px;
+    }
+
+    table.excel-table tbody tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    table.excel-table tbody tr:hover td {
+      background-color: #e0f2fe; /* Subtle row highlight */
+    }
+
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .text-bold { font-weight: 600; }
+
+    .empty-state {
+      padding: 50px 20px;
+      text-align: center;
+      color: #64748b;
+      background: #f8fafc;
+    }
+
+    /* Notification Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 18px;
+      background: #0f172a;
+      color: #fff;
+      border-radius: var(--radius-sm);
+      border: 1px solid #3b82f6;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: var(--transition);
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="loginScreen">
-  <div class="login-logo">📊 SalesTrack</div>
-  <div class="login-sub">Sales Visit Management</div>
-  <div class="login-card">
-    <div class="login-title">Select Your Name</div>
-    <div class="login-hint">Select your name from the list and enter your password</div>
-    <div class="login-select-box">
-      <div class="field-label">User</div>
-      <select id="userSelect" onchange="selectUserFromList()">
-        <option value="">Select user...</option>
-      </select>
-    </div>
-    <div class="password-box">
-      <div class="field-label">Password</div>
-      <input type="password" id="passwordInput" placeholder="Enter password..." autocomplete="current-password">
-      <div class="password-error" id="passwordError"></div>
-    </div>
-    <button class="login-btn" id="loginBtn" disabled onclick="doLogin()">Login →</button>
-  </div>
-</div>
-
-<!-- APP SCREEN -->
-<div id="appScreen">
-  <div class="top-bar">
-    <div class="top-bar-left">
-      <span class="top-bar-greeting">Welcome</span>
-      <span class="top-bar-name" id="topBarName">—</span>
-    </div>
-    <div class="top-bar-right">
-      <button class="icon-btn" onclick="openNotifications()" title="Notifications">🔔<span class="bell-count" id="bellCount">0</span></button>
-      <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-  </div>
-
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('new')">➕ New Visit</button>
-    <button class="tab-btn" onclick="switchTab('records')">📋 Records</button>
-    <button class="tab-btn admin-only" id="adminTabBtn" onclick="switchTab('admin')">⬇️ Admin</button>
-  </div>
-
-  <!-- NEW VISIT TAB -->
-  <div class="tab-content active" id="tab-new">
-
-    <!-- Date Time -->
-    <div class="form-section">
-      <div class="section-label">Visit Details</div>
-      <div class="field-label">📅 Visit Date & Time</div>
-      <input type="datetime-local" id="visitDateTime">
-    </div>
-
-    <!-- Company -->
-    <div class="form-section">
-      <div class="section-label">Company</div>
-      <div class="field-label">🏢 Company Name</div>
-      <input type="text" id="companyName" list="companySuggestions" placeholder="Enter company name..." oninput="handleCompanyChange()" onchange="handleCompanyChange()" autocomplete="off">
-      <datalist id="companySuggestions"></datalist>
-
-      <div class="field-label">Type</div>
-      <select id="companyType">
-        <option value="">Select type...</option>
-        <option value="Exporter">Exporter</option>
-        <option value="Importer">Importer</option>
-        <option value="Freight Forwarder">Freight Forwarder</option>
-        <option value="CHA">CHA</option>
-        <option value="Shipping Line">Shipping Line</option>
-      </select>
-    </div>
-
-    <!-- Location -->
-    <div class="form-section">
-      <div class="section-label">Location</div>
-      <div class="field-label">📍 Location</div>
-      <div class="location-row">
-        <input type="text" id="locationInput" placeholder="Enter location...">
-        <button class="loc-btn" onclick="getCurrentLocation()" title="Current Location">🎯</button>
-      </div>
-    </div>
-
-    <!-- Contact & Meeting -->
-    <div class="form-section">
-      <div class="section-label">Contact Info</div>
-
-      <div class="field-label">👤 Contact Person</div>
-      <input type="text" id="contactPerson" placeholder="Enter contact name...">
-
-      <div style="margin-top:10px">
-        <button class="pick-btn" onclick="openOldRecord('contact')">
-          📂 Pick from old records
-        </button>
-      </div>
-
-      <div class="field-label" style="margin-top:16px">🗓️ Meeting Close Date & Time</div>
-      <input type="datetime-local" id="meetingClose">
-
-      <div class="field-label">🕐 Last Visit Date & Time</div>
-      <input type="datetime-local" id="lastVisit">
-      <div style="margin-top:8px">
-        <button class="pick-btn" onclick="openOldRecord('lastvisit')">
-          📂 Pick last visit from the same company
-        </button>
-      </div>
-    </div>
-
-    <!-- Remarks -->
-    <div class="form-section">
-      <div class="section-label">Remarks</div>
-      <div class="field-label">💬 Notes / Remarks</div>
-      <textarea id="remarks" placeholder="Write notes here..."></textarea>
-    </div>
-
-    <button class="submit-btn" onclick="saveVisit()">✅ Save Visit</button>
-  </div>
-
-  <!-- RECORDS TAB -->
-  <div class="tab-content" id="tab-records">
-    <div class="form-section">
-      <div class="section-label">My Report</div>
-      <div class="record-detail block">Download your own complete visit data as an Excel .xlsx file.</div>
-      <button class="submit-btn" onclick="downloadMyReport()">⬇️ Download My Excel Report</button>
-    </div>
-    <div id="recordsList"></div>
-  </div>
-
-  <!-- ADMIN TAB -->
-  <div class="tab-content" id="tab-admin">
-    <div class="form-section">
-      <div class="section-label">Admin Report</div>
-      <div class="record-detail block">Complete Visit For all users Date and time.</div>
-      <div class="field-label">Report Date</div>
-      <input type="date" id="adminReportDate" onchange="renderAdminSummary()">
-      <button class="submit-btn" onclick="downloadAdminReport()">⬇️ Download Excel Report</button>
-    </div>
-    <div id="adminSummary"></div>
-  </div>
-</div>
-
-<!-- Old Record Modal -->
-<div class="modal-overlay" id="recordModal" onclick="closeModal(event)">
-  <div class="modal-sheet">
-    <div class="modal-title">
-      <span>Choose Record</span>
-      <button class="modal-close" onclick="closeModalDirect()">✕</button>
-    </div>
-    <div id="modalContent"></div>
-  </div>
-</div>
-
-<!-- Notification Modal -->
-<div class="modal-overlay" id="notificationModal" onclick="closeNotificationModal(event)">
-  <div class="modal-sheet">
-    <div class="modal-title">
-      <span>Notifications</span>
-      <button class="modal-close" onclick="closeNotificationModalDirect()">✕</button>
-    </div>
-    <div id="notificationContent"></div>
-  </div>
-</div>
-
-<div id="toast">✓ Saved!</div>
-
-<div class="saving-overlay" id="savingOverlay">
-  <div class="saving-box">
-    <div class="saving-spinner"></div>
-    <div class="saving-title">Saving...</div>
-    <div class="saving-sub">Please wait</div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
-import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp
-} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDD1_lt0NPPcCdqCFFcQiShuEqATcCeyHY",
-  authDomain: "invo-56d4d.firebaseapp.com",
-  projectId: "invo-56d4d",
-  storageBucket: "invo-56d4d.firebasestorage.app",
-  messagingSenderId: "324568889132",
-  appId: "1:324568889132:web:f42696b453db97f1e6de89",
-  measurementId: "G-J589GLB45F"
-};
-
-try {
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  try {
-    await signInAnonymously(auth);
-  } catch (authErr) {
-    console.warn('Anonymous Firebase auth failed:', authErr);
-  }
-  const db = getFirestore(app);
-  window.salesVisitFirebase = {
-    db,
-    visitsRef: collection(db, 'sales_visits'),
-    addDoc,
-    deleteDoc,
-    doc,
-    onSnapshot,
-    orderBy,
-    query,
-    serverTimestamp,
-    ready: true
-  };
-  window.dispatchEvent(new Event('salesVisitFirebaseReady'));
-} catch (err) {
-  console.error('Firebase init failed:', err);
-  window.salesVisitFirebase = { ready: false, error: err };
-}
-</script>
-
-<script>
-const USERS = [
-  { name: 'Anurag', password: 'ANURAG1', color: 'c0' },
-  { name: 'Harsimran', password: 'HARSIMRAN1', color: 'c1' },
-  { name: 'Damanjit', password: 'DAMANJIT1', color: 'c2', admin: true },
-  { name: 'Mohik', password: 'MOHIK', color: 'c3' },
-  { name: 'Chirag', password: 'CHIRAG1', color: 'c4' },
-  { name: 'Kunal', password: 'KUNAL1', color: 'c5' },
-  { name: 'Rajesh', password: 'RAJESH1', color: 'c6' },
-];
-
-let currentUser = null;
-let selectedUser = null;
-let modalTarget = null;
-let cloudRecords = [];
-let visitsUnsubscribe = null;
-let notificationsReady = false;
-let notifications = [];
-let unreadNotifications = 0;
-const DEVICE_ID = getDeviceId();
-
-// Build user list
-const userSelect = document.getElementById('userSelect');
-USERS.forEach(u => {
-  const option = document.createElement('option');
-  option.value = u.name;
-  option.textContent = u.name;
-  userSelect.appendChild(option);
-});
-document.getElementById('passwordInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doLogin();
-});
-
-function selectUserFromList() {
-  selectedUser = USERS.find(u => u.name === document.getElementById('userSelect').value) || null;
-  document.getElementById('loginBtn').disabled = false;
-  document.getElementById('passwordError').textContent = '';
-  if (selectedUser) document.getElementById('passwordInput').focus();
-  else document.getElementById('loginBtn').disabled = true;
-}
-
-function doLogin() {
-  if (!selectedUser) return;
-  const password = document.getElementById('passwordInput').value.trim().toUpperCase();
-  if (password !== selectedUser.password) {
-    document.getElementById('passwordError').textContent = 'Wrong password. Please try again.';
-    return;
-  }
-  currentUser = selectedUser;
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('appScreen').style.display = 'flex';
-  document.getElementById('topBarName').textContent = currentUser.name;
-  document.getElementById('adminTabBtn').style.display = currentUser.admin ? 'block' : 'none';
-  if (currentUser.admin) setAdminReportDateDefault();
-  requestNotificationAccess();
-  startCloudRecords();
-  // Set current datetime
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  document.getElementById('visitDateTime').value = local;
-  renderRecords();
-}
-
-function logout() {
-  currentUser = null; selectedUser = null;
-  stopCloudRecords();
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('appScreen').style.display = 'none';
-  document.getElementById('userSelect').value = '';
-  document.getElementById('loginBtn').disabled = true;
-  document.getElementById('adminTabBtn').style.display = 'none';
-  document.getElementById('passwordInput').value = '';
-  document.getElementById('passwordError').textContent = '';
-  clearForm();
-}
-
-function switchTab(tab) {
-  if (tab === 'admin' && !currentUser?.admin) return;
-  document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  const btn = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
-  if (btn) btn.classList.add('active');
-  document.getElementById('tab-' + tab).classList.add('active');
-  if (tab === 'records') renderRecords();
-  if (tab === 'admin') renderAdminSummary();
-}
-
-function getCurrentLocation() {
-  const btn = document.querySelector('.loc-btn');
-  btn.textContent = '⏳';
-  if (!navigator.geolocation) { showToast('Geolocation is not supported'); btn.textContent = '🎯'; return; }
-  navigator.geolocation.getCurrentPosition(pos => {
-    const { latitude, longitude } = pos.coords;
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
-      .then(r => r.json())
-      .then(d => {
-        const addr = d.display_name || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-        document.getElementById('locationInput').value = addr;
-        showToast('📍 Location found!');
-      })
-      .catch(() => {
-        document.getElementById('locationInput').value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        showToast('📍 Coordinates set!');
-      })
-      .finally(() => btn.textContent = '🎯');
-  }, () => { showToast('Location access denied'); btn.textContent = '🎯'; });
-}
-
-async function saveVisit() {
-  const vdt = document.getElementById('visitDateTime').value;
-  const company = document.getElementById('companyName').value.trim();
-  const companyType = document.getElementById('companyType').value;
-  const loc = document.getElementById('locationInput').value.trim();
-  const contact = document.getElementById('contactPerson').value.trim();
-  if (!vdt || !company || !companyType || !loc || !contact) {
-    showToast('⚠️ Date, company, type, location and contact are required'); return;
-  }
-  const savedAtLocal = new Date().toISOString();
-  const record = {
-    id: Date.now(),
-    user: currentUser.name,
-    visitDateTime: vdt,
-    companyName: company,
-    companyType,
-    location: loc,
-    contactPerson: contact,
-    meetingClose: document.getElementById('meetingClose').value,
-    lastVisit: document.getElementById('lastVisit').value,
-    remarks: document.getElementById('remarks').value.trim(),
-    deviceId: DEVICE_ID,
-    savedAt: savedAtLocal,
-    savedAtLocal
-  };
-  showSaving(true);
-  try {
-    if (!window.salesVisitFirebase?.ready) throw new Error('Firebase is not ready');
-    await window.salesVisitFirebase.addDoc(window.salesVisitFirebase.visitsRef, {
-      ...record,
-      savedAt: window.salesVisitFirebase.serverTimestamp(),
-      savedAtLocal
-    });
-    saveLocalBackup(record);
-    showToast('✅ Visit saved to Firebase!');
-    clearForm();
-    setTimeout(() => switchTab('records'), 1200);
-  } catch (err) {
-    console.error('Firebase save failed:', err);
-    saveLocalBackup(record);
-    showToast('⚠️ Firebase issue. Local backup saved.');
-  } finally {
-    showSaving(false);
-  }
-}
-
-function showSaving(isOpen) {
-  document.getElementById('savingOverlay').classList.toggle('open', Boolean(isOpen));
-}
-
-function saveLocalBackup(record) {
-  const key = `visits_${record.user}`;
-  const all = JSON.parse(localStorage.getItem(key) || '[]');
-  all.unshift(record);
-  localStorage.setItem(key, JSON.stringify(all));
-}
-
-function startCloudRecords() {
-  if (visitsUnsubscribe || !currentUser) return;
-  const fb = window.salesVisitFirebase;
-  if (!fb?.ready) {
-    setTimeout(startCloudRecords, 700);
-    return;
-  }
-  notificationsReady = false;
-  const visitsQuery = fb.query(fb.visitsRef, fb.orderBy('savedAt', 'desc'));
-  visitsUnsubscribe = fb.onSnapshot(visitsQuery, snapshot => {
-    cloudRecords = snapshot.docs.map(d => normalizeCloudRecord(d));
-    notifications = cloudRecords.filter(isSavedToday).map(recordToNotification);
-    updateCompanySuggestions();
-    updateBellCount();
-    snapshot.docChanges().forEach(change => {
-      if (change.type !== 'added' || !notificationsReady || !currentUser) return;
-      const record = normalizeCloudRecord(change.doc);
-      if (record.deviceId === DEVICE_ID) return;
-      if (isSavedToday(record)) unreadNotifications += 1;
-      notifyVisit(record);
-    });
-    updateBellCount();
-    notificationsReady = true;
-    if (document.getElementById('tab-records').classList.contains('active')) renderRecords();
-    if (document.getElementById('tab-admin').classList.contains('active')) renderAdminSummary();
-  }, err => {
-    console.error('Firebase listener failed:', err);
-    showToast('⚠️ Firebase records could not load');
-  });
-}
-
-function stopCloudRecords() {
-  if (visitsUnsubscribe) visitsUnsubscribe();
-  visitsUnsubscribe = null;
-  notificationsReady = false;
-  cloudRecords = [];
-  notifications = [];
-  unreadNotifications = 0;
-  updateBellCount();
-}
-
-function normalizeCloudRecord(docSnap) {
-  const data = docSnap.data();
-  const savedDate = data.savedAt?.toDate ? data.savedAt.toDate().toISOString() : data.savedAtLocal || data.savedAt || '';
-  return { ...data, id: docSnap.id, savedAt: savedDate };
-}
-
-function notifyVisit(record) {
-  const title = `${record.user || 'Sales'} saved a location`;
-  const body = `${record.companyName ? record.companyName + ' - ' : ''}${record.location || 'Location update'}`;
-  showToast(`${title}: ${body}`);
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body });
-  }
-}
-
-function requestNotificationAccess() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission().catch(() => {});
-  }
-}
-
-function getDeviceId() {
-  const key = 'sales_visit_device_id';
-  let id = localStorage.getItem(key);
-  if (!id) {
-    id = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-    localStorage.setItem(key, id);
-  }
-  return id;
-}
-
-function clearForm() {
-  ['visitDateTime','companyName','companyType','locationInput','contactPerson','meetingClose','lastVisit','remarks']
-    .forEach(id => document.getElementById(id).value = '');
-  if (currentUser) {
-    const now = new Date();
-    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    document.getElementById('visitDateTime').value = local;
-  }
-}
-
-function updateCompanySuggestions() {
-  const list = document.getElementById('companySuggestions');
-  const companies = [...new Set(cloudRecords.map(r => r.companyName).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  list.innerHTML = companies.map(name => `<option value="${escAttr(name)}"></option>`).join('');
-}
-
-function handleCompanyChange() {
-  const company = document.getElementById('companyName').value.trim().toLowerCase();
-  if (!company) return;
-  const match = cloudRecords
-    .filter(r => (r.companyName || '').trim().toLowerCase() === company)
-    .sort((a, b) => new Date(b.visitDateTime || b.savedAt || 0) - new Date(a.visitDateTime || a.savedAt || 0))[0];
-  if (!match) return;
-  if (match.companyType) document.getElementById('companyType').value = match.companyType;
-  if (match.visitDateTime) document.getElementById('lastVisit').value = match.visitDateTime;
-}
-
-function renderRecords() {
-  if (!currentUser) return;
-  const all = getUserRecords();
-  const container = document.getElementById('recordsList');
-  if (!all.length) {
-    container.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No visit records yet.<br>Add a new visit.</p></div>`;
-    return;
-  }
-  container.innerHTML = all.map(r => `
-    <div class="record-card">
-      <div class="record-header">
-        <div class="record-location">🏢 ${escHtml(r.companyName || 'Company not saved')}</div>
-        <div class="record-date">${fmtDT(r.visitDateTime)}</div>
-      </div>
-      <div class="record-detail">Type: <strong>${escHtml(r.companyType || '-')}</strong></div>
-      <div class="record-detail">📍 <strong>${escHtml(r.location)}</strong></div>
-      <div class="record-detail">👤 <strong>${escHtml(r.contactPerson)}</strong></div>
-      ${r.lastVisit ? `<div class="record-detail">🕐 Last Visit: <strong>${fmtDT(r.lastVisit)}</strong></div>` : ''}
-      ${r.meetingClose ? `<div class="record-detail">🗓️ Meeting Close: <strong>${fmtDT(r.meetingClose)}</strong></div>` : ''}
-      ${r.remarks ? `<div class="record-detail">💬 ${escHtml(r.remarks)}</div>` : ''}
-      <div class="record-detail">Saved: <strong>${fmtDT(r.savedAt)}</strong></div>
-      <div class="record-actions">
-        <button class="use-record-btn" onclick="useRecord('${escAttr(r.id)}')">📋 Fill form from this record</button>
-        <button class="use-record-btn" style="flex:0;padding:8px 12px;color:#E53935;background:#ffebee" onclick="deleteRecord('${escAttr(r.id)}')">🗑️</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function getUserRecords() {
-  if (!currentUser) return [];
-  if (currentUser.admin && document.getElementById('tab-admin').classList.contains('active')) return cloudRecords;
-  const cloud = cloudRecords.filter(r => r.user === currentUser.name);
-  if (cloud.length || window.salesVisitFirebase?.ready) return cloud;
-  return JSON.parse(localStorage.getItem(`visits_${currentUser.name}`) || '[]');
-}
-
-function deleteLocalRecord(id) {
-  const key = `visits_${currentUser.name}`;
-  let all = JSON.parse(localStorage.getItem(key) || '[]');
-  all = all.filter(x => String(x.id) !== String(id));
-  localStorage.setItem(key, JSON.stringify(all));
-}
-
-function useRecord(id) {
-  const all = getUserRecords();
-  const r = all.find(x => String(x.id) === String(id));
-  if (!r) return;
-  document.getElementById('companyName').value = r.companyName || '';
-  document.getElementById('companyType').value = r.companyType || '';
-  document.getElementById('locationInput').value = r.location;
-  document.getElementById('contactPerson').value = r.contactPerson;
-  if (r.visitDateTime) document.getElementById('lastVisit').value = r.visitDateTime;
-  if (r.meetingClose) document.getElementById('meetingClose').value = r.meetingClose;
-  showToast('📋 Form filled from record!');
-  switchTab('new');
-}
-
-async function deleteRecord(id) {
-  if (!confirm('Delete this record?')) return;
-  try {
-    if (window.salesVisitFirebase?.ready && !/^\d+$/.test(String(id))) {
-      await window.salesVisitFirebase.deleteDoc(window.salesVisitFirebase.doc(window.salesVisitFirebase.db, 'sales_visits', id));
-    } else {
-      deleteLocalRecord(id);
-    }
-    renderRecords();
-    showToast('🗑️ Record deleted');
-  } catch (err) {
-    console.error('Delete failed:', err);
-    showToast('⚠️ Record could not be deleted');
-  }
-}
-
-// Modal for picking from old records
-function openOldRecord(target) {
-  modalTarget = target;
-  const all = getUserRecords();
-  const modal = document.getElementById('recordModal');
-  const content = document.getElementById('modalContent');
-  if (!all.length) {
-    content.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No old records found.</p></div>`;
-  } else {
-    const companyName = document.getElementById('companyName').value.trim().toLowerCase();
-    const filtered = target === 'lastvisit' && companyName
-      ? all.filter(r => (r.companyName || '').trim().toLowerCase() === companyName)
-      : all;
-    content.innerHTML = (filtered.length ? filtered : all).map(r => `
-      <div class="record-card" style="cursor:pointer" onclick="pickFromRecord('${escAttr(r.id)}')">
-        <div class="record-header">
-          <div class="record-location">🏢 ${escHtml(r.companyName || 'Company not saved')}</div>
-          <div class="record-date">${fmtDT(r.visitDateTime)}</div>
+  <div class="container">
+    
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">MSC</div>
+        <div class="brand-text">
+          <h1>MSC Report Generator & Formatter</h1>
+          <p>Formatted with Navy Blue (#002D62) Header & DD-MM-YYYY HH:mm Dates</p>
         </div>
-        <div class="record-detail">📍 <strong>${escHtml(r.location || '-')}</strong></div>
-        <div class="record-detail">👤 <strong>${escHtml(r.contactPerson)}</strong></div>
       </div>
-    `).join('');
-  }
-  modal.classList.add('open');
-}
-
-function pickFromRecord(id) {
-  const all = getUserRecords();
-  const r = all.find(x => String(x.id) === String(id));
-  if (!r) return;
-  if (modalTarget === 'contact') {
-    document.getElementById('contactPerson').value = r.contactPerson;
-    showToast('👤 Contact filled!');
-  } else if (modalTarget === 'lastvisit') {
-    document.getElementById('lastVisit').value = r.visitDateTime;
-    showToast('🕐 Last visit filled!');
-  }
-  closeModalDirect();
-}
-
-function closeModal(e) {
-  if (e.target === document.getElementById('recordModal')) closeModalDirect();
-}
-function closeModalDirect() {
-  document.getElementById('recordModal').classList.remove('open');
-}
-
-function recordToNotification(record) {
-  return {
-    id: record.id,
-    user: record.user || 'Unknown',
-    companyName: record.companyName || '',
-    companyType: record.companyType || '',
-    location: record.location || '',
-    visitDateTime: record.visitDateTime || '',
-    savedAt: record.savedAt || record.savedAtLocal || ''
-  };
-}
-
-function isSavedToday(record) {
-  const dt = record.savedAt || record.savedAtLocal;
-  if (!dt) return false;
-  const saved = new Date(dt);
-  if (Number.isNaN(saved.getTime())) return false;
-  const today = new Date();
-  return saved.getFullYear() === today.getFullYear()
-    && saved.getMonth() === today.getMonth()
-    && saved.getDate() === today.getDate();
-}
-
-function updateBellCount() {
-  const badge = document.getElementById('bellCount');
-  if (!badge) return;
-  if (unreadNotifications > 0) {
-    badge.textContent = unreadNotifications > 99 ? '99+' : unreadNotifications;
-    badge.style.display = 'flex';
-  } else {
-    badge.style.display = 'none';
-  }
-}
-
-function openNotifications() {
-  unreadNotifications = 0;
-  updateBellCount();
-  renderNotifications();
-  document.getElementById('notificationModal').classList.add('open');
-}
-
-function renderNotifications() {
-  const content = document.getElementById('notificationContent');
-  if (!notifications.length) {
-    content.innerHTML = `<div class="empty-state"><div class="emoji">🔔</div><p>No notifications saved today.</p></div>`;
-    return;
-  }
-  const grouped = notifications.reduce((acc, item) => {
-    (acc[item.user] ||= []).push(item);
-    return acc;
-  }, {});
-  content.innerHTML = Object.keys(grouped).sort().map(user => `
-    <div class="notification-user">${escHtml(user)}</div>
-    ${grouped[user].map(item => `
-      <div class="notification-item">
-        <div><strong>${escHtml(item.companyName || 'Company not saved')}</strong></div>
-        <div class="record-detail">📍 ${escHtml(item.location || '-')}</div>
-        <div class="record-detail">Type: ${escHtml(item.companyType || '-')}</div>
-        <div class="notification-meta">Visit: ${fmtDT(item.visitDateTime)} | Saved: ${fmtDT(item.savedAt)}</div>
+      <div class="header-badges">
+        <span class="badge green">● Line: MSC Filter</span>
+        <span class="badge">Header: Dark Navy Blue</span>
+        <span class="badge">Date: DD-MM-YYYY HH:mm</span>
       </div>
-    `).join('')}
-  `).join('');
-}
+    </header>
 
-function closeNotificationModal(e) {
-  if (e.target === document.getElementById('notificationModal')) closeNotificationModalDirect();
-}
-function closeNotificationModalDirect() {
-  document.getElementById('notificationModal').classList.remove('open');
-}
+    <!-- Top Stats Bar -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon blue">📊</div>
+        <div class="stat-info">
+          <h4>Uploaded Rows</h4>
+          <div class="num" id="statTotal">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <h4>Filtered Records</h4>
+          <div class="num" id="statMatched">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">📦</div>
+        <div class="stat-info">
+          <h4>Total TEUs</h4>
+          <div class="num" id="statTeus">0</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon amber">🚫</div>
+        <div class="stat-info">
+          <h4>Excluded Rows</h4>
+          <div class="num" id="statExcluded">0</div>
+        </div>
+      </div>
+    </div>
 
-function setAdminReportDateDefault() {
-  const input = document.getElementById('adminReportDate');
-  if (!input || input.value) return;
-  const now = new Date();
-  input.value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-}
+    <!-- Upload & Filters -->
+    <div class="grid-main">
+      <!-- File Upload Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload Source Excel (Columns A to AK)
+        </div>
 
-function getAdminReportDate() {
-  return document.getElementById('adminReportDate')?.value || '';
-}
+        <div class="upload-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".xlsx, .xls, .xlsm, .xlsb, .csv">
+          <div class="upload-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div class="upload-title">Drop Excel File Here or Click to Browse</div>
+          <div class="upload-desc">Upload source file with Cell A - AK data</div>
+        </div>
 
-function recordMatchesAdminDate(record) {
-  const selectedDate = getAdminReportDate();
-  if (!selectedDate) return true;
-  const dateValue = record.visitDateTime || record.savedAt || record.savedAtLocal;
-  if (!dateValue) return false;
-  const parsed = new Date(dateValue);
-  if (Number.isNaN(parsed.getTime())) return String(dateValue).slice(0, 10) <= selectedDate;
-  const localDate = new Date(parsed.getTime() - parsed.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-  return localDate <= selectedDate;
-}
+        <div class="upload-file-info" id="fileInfo">
+          <span id="fileNameDisplay">file_name.xlsx</span>
+          <span id="fileSizeDisplay">0 KB</span>
+        </div>
+      </div>
 
-function getAdminReportRecords() {
-  return cloudRecords.filter(recordMatchesAdminDate);
-}
+      <!-- Filter Parameters Card -->
+      <div class="card">
+        <div class="card-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Filter Parameters
+        </div>
 
-function renderAdminRecordsTable(records) {
-  if (!records.length) {
-    return `<div class="empty-state"><div class="emoji">📋</div><p>No records found for selected date.</p></div>`;
-  }
-  const displayColumns = [
-    ['user', 'User'],
-    ['companyName', 'Company Name'],
-    ['companyType', 'Type'],
-    ['visitDateTime', 'Visit Date & Time'],
-    ['meetingClose', 'Meeting Close Date & Time'],
-    ['lastVisit', 'Last Visit Date & Time']
-  ];
-  return `
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr>${displayColumns.map(([, label]) => `<th>${escHtml(label)}</th>`).join('')}</tr>
-        </thead>
-        <tbody>
-          ${records.map(record => `
+        <div class="filter-group">
+          <label class="filter-label">
+            <span>Line Filter:</span>
+            <span style="color: #60a5fa; font-size: 11px;">Default: MSC</span>
+          </label>
+          <input type="text" id="filterLine" class="input-field" value="MSC">
+        </div>
+
+        <div class="filter-group">
+          <div class="filter-label">
+            <span>Consignee Filter (SHIPPER AS PER MMMAG / AF):</span>
+            <div class="consignee-actions">
+              <button class="btn-sub" onclick="toggleAllConsignees(true)">Select All</button>
+              <button class="btn-sub" onclick="toggleAllConsignees(false)">Clear All</button>
+            </div>
+          </div>
+          <div class="consignee-list" id="consigneeList"></div>
+        </div>
+
+        <div class="filter-group" style="margin-bottom: 0;">
+          <label class="filter-label">Default PORT (Col P):</label>
+          <input type="text" id="defaultPort" class="input-field" value="MUNDRA">
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="actions-bar">
+      <button class="btn btn-primary" id="btnApplyFilters" onclick="processData()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        Re-Apply Filter
+      </button>
+      <button class="btn btn-excel" id="btnExport" onclick="downloadFormattedExcel()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Generate & Download Formatted Excel Report (.xlsx)
+      </button>
+      <button class="btn btn-outlook" id="btnEmail" onclick="openOutlookEmail()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 4 12 13 2 4"/></svg>
+        📧 Send Email via Outlook
+      </button>
+    </div>
+
+    <!-- Exact Excel Preview Table -->
+    <div class="table-container">
+      <div class="table-header-bar">
+        <div style="font-weight: 600; font-size: 13px; color: #f8fafc; display: flex; align-items: center; gap: 8px;">
+          <span>Excel Output Preview (Exact Color & Date Format)</span>
+          <span id="previewCountBadge" class="badge green" style="display: none; padding: 3px 8px; font-size: 11px;">0 Rows</span>
+        </div>
+        <div class="search-box">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="tableSearch" placeholder="Search in preview..." oninput="filterPreviewTable()">
+        </div>
+      </div>
+
+      <div class="table-scroll">
+        <table class="excel-table" id="reportTable">
+          <thead>
             <tr>
-              ${displayColumns.map(([key]) => `<td>${escHtml(REPORT_DATE_KEYS.has(key) ? fmtDT(record[key]) : (record[key] || '-'))}</td>`).join('')}
+              <th class="text-center">SR_No.</th>
+              <th>Rake ID</th>
+              <th class="text-center">ARRIVAL DATE</th>
+              <th class="text-center">De Stuff/Cont. OUT DATE</th>
+              <th>TRANSPORTER</th>
+              <th class="text-center">CONT_Nos.</th>
+              <th class="text-center">Size</th>
+              <th class="text-center">Teus</th>
+              <th>Consignee (As per Train Summry)</th>
+              <th>Consignee (As per Gateout from ICD)</th>
+              <th>BL_No.</th>
+              <th class="text-center">Carrier</th>
+              <th>Commodity (As Per Train Summary)</th>
+              <th class="text-center">Line</th>
+              <th>IGM LOCATION</th>
+              <th class="text-center">PORT</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="16">
+                <div class="empty-state">
+                  Please upload an Excel file to view filtered data formatted exactly as shown in the screenshot.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  `;
-}
 
-function renderAdminSummary() {
-  if (!currentUser?.admin) return;
-  setAdminReportDateDefault();
-  const box = document.getElementById('adminSummary');
-  if (!cloudRecords.length) {
-    box.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><p>No records available for report.</p></div>`;
-    return;
-  }
-  const reportRecords = getAdminReportRecords();
-  const userCounts = reportRecords.reduce((acc, r) => {
-    acc[r.user || 'Unknown'] = (acc[r.user || 'Unknown'] || 0) + 1;
-    return acc;
-  }, {});
-  box.innerHTML = `
-    <div class="form-section">
-      <div class="section-label">Report Summary</div>
-      <div class="record-detail">Records Till: <strong>${escHtml(getAdminReportDate() || 'All Dates')}</strong></div>
-      <div class="record-detail">Total Records: <strong>${reportRecords.length}</strong></div>
-      ${Object.keys(userCounts).sort().map(user => `<div class="record-detail">${escHtml(user)}: <strong>${userCounts[user]}</strong></div>`).join('')}
-      ${renderAdminRecordsTable(reportRecords)}
-    </div>
-  `;
-}
+  </div>
 
-const REPORT_COLUMNS = [
-  ['user', 'User'],
-  ['companyName', 'Company Name'],
-  ['companyType', 'Type'],
-  ['location', 'Location'],
-  ['contactPerson', 'Contact Person'],
-  ['visitDateTime', 'Visit Date & Time'],
-  ['lastVisit', 'Last Visit Date & Time'],
-  ['meetingClose', 'Meeting Close Date & Time'],
-  ['remarks', 'Remarks'],
-  ['savedAt', 'Saved Date & Time']
-];
-const REPORT_DATE_KEYS = new Set(['visitDateTime', 'lastVisit', 'meetingClose', 'savedAt']);
+  <div id="toast">✅ Action Completed</div>
 
-function buildReportRows(records) {
-  return records.map(record => {
-    const row = {};
-    REPORT_COLUMNS.forEach(([key, label]) => {
-      row[label] = REPORT_DATE_KEYS.has(key) ? fmtDT(record[key]) : (record[key] || '');
-    });
-    return row;
-  });
-}
+  <script>
+    // Exact Filter Consignees
+    const DEFAULT_CONSIGNEES = [
+      "ARORA IRON & STEEL ROLLING MILLS P.L.",
+      "MADHAV KRG HRC PRIVATE LIMITED",
+      "MADHAV KRG LIMITED",
+      "JYOTI INDUSTRIES UNIT NO.II",
+      "KHANNA PAPER MILLS LTD.",
+      "VISHAL PAPERTECH (INDIA) LTD",
+      "VISHAL PAPER MILLS PVT. LTD"
+    ];
 
-function downloadXlsxReport(records, filename, sheetName) {
-  if (!records.length) {
-    showToast('No data available to download');
-    return;
-  }
-  if (!window.XLSX) {
-    showToast('Excel library is still loading. Please try again.');
-    return;
-  }
-  const rows = buildReportRows(records);
-  const headers = REPORT_COLUMNS.map(([, label]) => label);
-  const worksheet = XLSX.utils.json_to_sheet(rows, { header: headers });
-  worksheet['!cols'] = REPORT_COLUMNS.map(([, label]) => ({ wch: Math.max(label.length + 4, 20) }));
-  applyWorksheetStyle(worksheet, headers.length, rows.length);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-  XLSX.writeFile(workbook, filename);
-  showToast('Excel report downloaded');
-}
+    let rawUploadedRows = [];
+    let mappedReportRows = [];
+    let currentUploadedFileName = "";
 
-function applyWorksheetStyle(worksheet, columnCount, rowCount) {
-  const border = {
-    top: { style: 'thin', color: { rgb: '808080' } },
-    bottom: { style: 'thin', color: { rgb: '808080' } },
-    left: { style: 'thin', color: { rgb: '808080' } },
-    right: { style: 'thin', color: { rgb: '808080' } }
-  };
-  const headerStyle = {
-    font: { bold: true, color: { rgb: 'FFFFFF' } },
-    fill: { fgColor: { rgb: '1A73E8' } },
-    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-    border
-  };
-  const bodyStyle = {
-    alignment: { vertical: 'top', wrapText: true },
-    border
-  };
-  for (let c = 0; c < columnCount; c++) {
-    const headerCell = XLSX.utils.encode_cell({ r: 0, c });
-    if (worksheet[headerCell]) worksheet[headerCell].s = headerStyle;
-  }
-  for (let r = 1; r <= rowCount; r++) {
-    for (let c = 0; c < columnCount; c++) {
-      const cellRef = XLSX.utils.encode_cell({ r, c });
-      if (!worksheet[cellRef]) worksheet[cellRef] = { t: 's', v: '' };
-      worksheet[cellRef].s = bodyStyle;
+    function initConsigneeUI() {
+      const container = document.getElementById("consigneeList");
+      container.innerHTML = "";
+      DEFAULT_CONSIGNEES.forEach((name) => {
+        const item = document.createElement("label");
+        item.className = "consignee-item";
+        item.innerHTML = `
+          <input type="checkbox" value="${name}" checked onchange="processData()">
+          <span>${name}</span>
+        `;
+        container.appendChild(item);
+      });
     }
-  }
-  worksheet['!autofilter'] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rowCount, c: columnCount - 1 } }) };
-}
 
-function downloadMyReport() {
-  if (!currentUser) return;
-  const records = getUserRecords();
-  const safeName = currentUser.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  downloadXlsxReport(records, `sales-visit-${safeName}-${new Date().toISOString().slice(0,10)}.xlsx`, 'My Visits');
-}
+    function toggleAllConsignees(checked) {
+      const checkboxes = document.querySelectorAll("#consigneeList input[type='checkbox']");
+      checkboxes.forEach(cb => cb.checked = checked);
+      processData();
+    }
 
-function downloadAdminReport() {
-  if (!currentUser?.admin) return;
-  const date = getAdminReportDate() || 'all-dates';
-  downloadXlsxReport(getAdminReportRecords(), `sales-visit-all-users-${date}.xlsx`, 'All Visits');
-}
+    // Drag and drop handlers
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
 
-function fmtDT(dt) {
-  if (!dt) return '-';
-  const d = new Date(dt);
-  if (Number.isNaN(d.getTime())) return dt;
-  return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'2-digit', hour:'2-digit', minute:'2-digit' });
-}
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
 
-function escHtml(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
 
-function escAttr(s) {
-  return escHtml(String(s || '')).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
-}
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      if (dt.files.length) handleFile(dt.files[0]);
+    });
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-</script>
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function handleFile(file) {
+      currentUploadedFileName = file.name;
+      document.getElementById('fileNameDisplay').textContent = file.name;
+      document.getElementById('fileSizeDisplay').textContent = formatFileSize(file.size);
+      document.getElementById('fileInfo').style.display = 'flex';
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: "" });
+          
+          if (!jsonData || jsonData.length === 0) {
+            alert("Uploaded sheet is empty.");
+            return;
+          }
+
+          rawUploadedRows = jsonData;
+          document.getElementById('btnApplyFilters').disabled = false;
+          processData();
+          showToast(`✅ File parsed successfully! (${jsonData.length} total rows)`);
+        } catch (err) {
+          console.error(err);
+          alert("Error reading excel file: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // Helper to format Date cleanly to "DD-MM-YYYY HH:mm" as shown in screenshot
+    function formatExactDateTime(val) {
+      if (!val) return "";
+      if (val instanceof Date && !isNaN(val)) {
+        const d = String(val.getDate()).padStart(2, '0');
+        const m = String(val.getMonth() + 1).padStart(2, '0');
+        const y = val.getFullYear();
+        const hh = String(val.getHours()).padStart(2, '0');
+        const mm = String(val.getMinutes()).padStart(2, '0');
+        return `${d}-${m}-${y} ${hh}:${mm}`;
+      }
+
+      let s = String(val).trim();
+      if (!s) return "";
+
+      // Check if it's an ISO format "YYYY-MM-DDTHH:mm:ss"
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+        const dt = new Date(s);
+        if (!isNaN(dt.getTime())) {
+          const d = String(dt.getDate()).padStart(2, '0');
+          const m = String(dt.getMonth() + 1).padStart(2, '0');
+          const y = dt.getFullYear();
+          const hh = String(dt.getHours()).padStart(2, '0');
+          const mm = String(dt.getMinutes()).padStart(2, '0');
+          return `${d}-${m}-${y} ${hh}:${mm}`;
+        }
+      }
+
+      // Check if already in DD-MM-YYYY or DD/MM/YYYY
+      const parts = s.split(/[\sT]+/);
+      let datePart = parts[0];
+      let timePart = parts[1] || "";
+
+      if (datePart.includes("/")) {
+        const dparts = datePart.split("/");
+        if (dparts.length === 3) {
+          // If first part is 4-digit year e.g. 2026/03/22
+          if (dparts[0].length === 4) {
+            datePart = `${dparts[2].padStart(2, '0')}-${dparts[1].padStart(2, '0')}-${dparts[0]}`;
+          } else {
+            datePart = `${dparts[0].padStart(2, '0')}-${dparts[1].padStart(2, '0')}-${dparts[2]}`;
+          }
+        }
+      } else if (datePart.includes("-")) {
+        const dparts = datePart.split("-");
+        if (dparts.length === 3 && dparts[0].length === 4) {
+          // 2026-03-22 -> 22-03-2026
+          datePart = `${dparts[2].padStart(2, '0')}-${dparts[1].padStart(2, '0')}-${dparts[0]}`;
+        }
+      }
+
+      if (timePart) {
+        // Take HH:mm
+        const tparts = timePart.split(":");
+        if (tparts.length >= 2) {
+          timePart = `${tparts[0].padStart(2, '0')}:${tparts[1].padStart(2, '0')}`;
+        }
+        return `${datePart} ${timePart}`.trim();
+      }
+
+      return datePart;
+    }
+
+    function cleanStr(val) {
+      if (val === null || val === undefined) return "";
+      return String(val).trim();
+    }
+
+    function normalizeName(str) {
+      return cleanStr(str).toUpperCase().replace(/[\s\.\,\_\-\(\)]+/g, "");
+    }
+
+    function processData() {
+      if (!rawUploadedRows || rawUploadedRows.length === 0) return;
+
+      const targetLine = cleanStr(document.getElementById('filterLine').value).toUpperCase();
+      const defaultPort = cleanStr(document.getElementById('defaultPort').value) || "MUNDRA";
+
+      const checkedBoxes = document.querySelectorAll("#consigneeList input[type='checkbox']:checked");
+      const selectedConsignees = Array.from(checkedBoxes).map(cb => normalizeName(cb.value));
+
+      let headerRowIndex = 0;
+      const firstRowStr = rawUploadedRows[0].join(" ").toUpperCase();
+      if (firstRowStr.includes("RAKE") || firstRowStr.includes("CONT") || firstRowStr.includes("LINE") || firstRowStr.includes("SR")) {
+        headerRowIndex = 1;
+      }
+
+      // Column Indices (A=0, B=1, ... AK=36)
+      const COL_RAKE_ID = 1;         // B: (Rake ID) FROM - TO
+      const COL_ARRIVAL_DATE = 3;    // D: ICD ARRIVAL DATE
+      const COL_CONT_NO = 6;         // G: CONT_Nos
+      const COL_SIZE = 7;            // H: Size
+      const COL_TEUS = 8;            // I: Teus
+      const COL_BL_NO = 13;          // N: BL_No
+      const COL_DESTINATION = 15;    // P: Destination -> IGM LOCATION
+      const COL_CARRIER = 16;        // Q: Carrier
+      const COL_COMMODITY = 23;      // X: Comodity
+      const COL_LINE = 27;           // AB: Line
+      const COL_IMPORTER = 28;       // AC: IMPORTER -> Consignee (As per Train Summry)
+      const COL_GATEOUT_DATE = 29;   // AD: GATE_OUT_DATE Mmmag -> De Stuff/Cont. OUT DATE
+      const COL_TRANSPORTER = 30;    // AE: TRANSPORTER MMMag
+      const COL_SHIPPER_MMMAG = 31;  // AF: SHIPPER AS PER MMMAG -> Consignee (As per Gateout from ICD)
+
+      let matched = [];
+      let totalTeus = 0;
+      let totalDataRows = 0;
+
+      for (let i = headerRowIndex; i < rawUploadedRows.length; i++) {
+        const row = rawUploadedRows[i];
+        if (!row || row.length === 0 || row.every(c => cleanStr(c) === "")) continue;
+
+        totalDataRows++;
+
+        const rowLine = cleanStr(row[COL_LINE]).toUpperCase();
+        const rowShipperGateout = cleanStr(row[COL_SHIPPER_MMMAG]);
+        const normalizedShipper = normalizeName(rowShipperGateout);
+
+        // Filter 1: Line matching
+        const lineMatches = !targetLine || rowLine === targetLine || rowLine.includes(targetLine);
+
+        // Filter 2: Consignee matching
+        let consigneeMatches = false;
+        if (selectedConsignees.length === 0) {
+          consigneeMatches = true;
+        } else {
+          consigneeMatches = selectedConsignees.some(sc => {
+            return normalizedShipper === sc || normalizedShipper.includes(sc) || sc.includes(normalizedShipper);
+          });
+        }
+
+        if (lineMatches && consigneeMatches) {
+          const teuNum = parseFloat(row[COL_TEUS]) || (cleanStr(row[COL_SIZE]) === "40" ? 2 : 1);
+          totalTeus += isNaN(teuNum) ? 0 : teuNum;
+
+          matched.push({
+            srNo: matched.length + 1,
+            rakeId: cleanStr(row[COL_RAKE_ID]),
+            arrivalDate: formatExactDateTime(row[COL_ARRIVAL_DATE]),
+            gateOutDate: formatExactDateTime(row[COL_GATEOUT_DATE]),
+            transporter: cleanStr(row[COL_TRANSPORTER]),
+            contNo: cleanStr(row[COL_CONT_NO]),
+            size: cleanStr(row[COL_SIZE]),
+            teus: cleanStr(row[COL_TEUS]),
+            consigneeTrain: cleanStr(row[COL_IMPORTER]),
+            consigneeGateout: rowShipperGateout,
+            blNo: cleanStr(row[COL_BL_NO]),
+            carrier: cleanStr(row[COL_CARRIER]),
+            commodity: cleanStr(row[COL_COMMODITY]),
+            line: cleanStr(row[COL_LINE]) || targetLine,
+            igmLocation: cleanStr(row[COL_DESTINATION]),
+            port: defaultPort
+          });
+        }
+      }
+
+      mappedReportRows = matched;
+
+      // Update Stats
+      document.getElementById('statTotal').textContent = totalDataRows;
+      document.getElementById('statMatched').textContent = matched.length;
+      document.getElementById('statExcluded').textContent = totalDataRows - matched.length;
+      document.getElementById('statTeus').textContent = totalTeus.toFixed(1).replace(/\.0$/, '');
+
+      document.getElementById('btnExport').disabled = (matched.length === 0);
+      document.getElementById('btnEmail').disabled = (matched.length === 0);
+
+      renderTable(matched);
+    }
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('tableBody');
+      const countBadge = document.getElementById('previewCountBadge');
+      
+      if (!rows || rows.length === 0) {
+        countBadge.style.display = 'none';
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="16">
+              <div class="empty-state">
+                No matching records found for Line "MSC" and the selected consignees.
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      countBadge.textContent = `${rows.length} Rows`;
+      countBadge.style.display = 'inline-block';
+
+      let html = "";
+      rows.forEach(r => {
+        html += `
+          <tr>
+            <td class="text-center">${r.srNo}</td>
+            <td>${r.rakeId}</td>
+            <td class="text-center">${r.arrivalDate}</td>
+            <td class="text-center">${r.gateOutDate}</td>
+            <td>${r.transporter}</td>
+            <td class="text-center text-bold">${r.contNo}</td>
+            <td class="text-center">${r.size}</td>
+            <td class="text-center">${r.teus}</td>
+            <td>${r.consigneeTrain}</td>
+            <td>${r.consigneeGateout}</td>
+            <td>${r.blNo}</td>
+            <td class="text-center">${r.carrier}</td>
+            <td>${r.commodity}</td>
+            <td class="text-center">${r.line}</td>
+            <td>${r.igmLocation}</td>
+            <td class="text-center">${r.port}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    function filterPreviewTable() {
+      const q = document.getElementById('tableSearch').value.toLowerCase();
+      if (!q) {
+        renderTable(mappedReportRows);
+        return;
+      }
+      const filtered = mappedReportRows.filter(r => {
+        return Object.values(r).some(val => String(val).toLowerCase().includes(q));
+      });
+      renderTable(filtered);
+    }
+
+    // EXPORT STYLED EXCEL WITH EXACT NAVY BLUE COLOR (#002D62), WHITE TEXT, AND PROPER DATES
+    async function downloadFormattedExcel() {
+      if (!mappedReportRows || mappedReportRows.length === 0) {
+        alert("No data available to download.");
+        return;
+      }
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = 'MSC Portal';
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet('Sheet1', {
+        views: [{ showGridLines: true }]
+      });
+
+      const columnsConfig = [
+        { header: 'SR_No.', key: 'srNo', width: 10, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'Rake ID', key: 'rakeId', width: 28, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'ARRIVAL DATE', key: 'arrivalDate', width: 20, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'De Stuff/Cont. OUT DATE', key: 'gateOutDate', width: 24, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'TRANSPORTER', key: 'transporter', width: 28, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'CONT_Nos.', key: 'contNo', width: 16, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'Size', key: 'size', width: 8, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'Teus', key: 'teus', width: 8, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'Consignee (As per Train Summry)', key: 'consigneeTrain', width: 38, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'Consignee (As per Gateout from ICD)', key: 'consigneeGateout', width: 38, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'BL_No.', key: 'blNo', width: 18, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'Carrier', key: 'carrier', width: 12, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'Commodity (As Per Train Summary)', key: 'commodity', width: 40, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'Line', key: 'line', width: 10, alignment: { horizontal: 'center', vertical: 'middle' } },
+        { header: 'IGM LOCATION', key: 'igmLocation', width: 20, alignment: { horizontal: 'left', vertical: 'middle' } },
+        { header: 'PORT', key: 'port', width: 12, alignment: { horizontal: 'center', vertical: 'middle' } }
+      ];
+
+      worksheet.columns = columnsConfig;
+
+      // Add Data Rows
+      mappedReportRows.forEach(r => {
+        worksheet.addRow(r);
+      });
+
+      // Style Header Row (Row 1): Navy Blue (#002D62) & White Bold Text
+      const headerRow = worksheet.getRow(1);
+      headerRow.height = 24;
+
+      headerRow.eachCell((cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FF002D62' } // Exact Navy Blue from Screenshot
+        };
+        cell.font = {
+          name: 'Segoe UI',
+          color: { argb: 'FFFFFFFF' }, // White text
+          bold: true,
+          size: 10
+        };
+        cell.alignment = {
+          horizontal: 'left',
+          vertical: 'middle'
+        };
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF1E40AF' } },
+          left: { style: 'thin', color: { argb: 'FF1E40AF' } },
+          bottom: { style: 'thin', color: { argb: 'FF1E40AF' } },
+          right: { style: 'thin', color: { argb: 'FF1E40AF' } }
+        };
+      });
+
+      // Specific center alignments for header titles
+      ['A1', 'C1', 'D1', 'F1', 'G1', 'H1', 'L1', 'N1', 'P1'].forEach(cellId => {
+        worksheet.getCell(cellId).alignment = { horizontal: 'center', vertical: 'middle' };
+      });
+
+      // Style Data Rows
+      const thinBorder = {
+        top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+        right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+      };
+
+      for (let r = 2; r <= worksheet.rowCount; r++) {
+        const row = worksheet.getRow(r);
+        row.height = 20;
+
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          cell.font = {
+            name: 'Segoe UI',
+            size: 9.5,
+            color: { argb: 'FF000000' }
+          };
+          cell.border = thinBorder;
+          const colConfig = columnsConfig[colNumber - 1];
+          if (colConfig && colConfig.alignment) {
+            cell.alignment = colConfig.alignment;
+          }
+        });
+      }
+
+      // Generate buffer and trigger download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
+      const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
+      const fileName = `MSC_Report_${dateStr}_${timeStr}.xlsx`;
+
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, fileName);
+
+      showToast(`📥 Excel file with exact formatting downloaded!`);
+    }
+
+    // Open Outlook Email with pre-filled fields via mailto:
+    function openOutlookEmail() {
+      if (!mappedReportRows || mappedReportRows.length === 0) {
+        alert("Please generate the report first before sending email.");
+        return;
+      }
+
+      const toEmail = "rajiv.yadav@msc.com";
+      const ccEmails = [
+        "ashutosh.kothari@msc.com",
+        "samridhi.khajuria@msc.com",
+        "htpl.import@hindterminals.com",
+        "rajeev.sharma@hindterminals.com",
+        "ekta@hindterminals.com"
+      ].join(";");
+
+      // Today's date formatted DD-MM-YYYY
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const todayStr = `${dd}-${mm}-${yyyy}`;
+
+      const subject = `Weekly Gate Out Report (MSC) ${todayStr}`;
+
+      // Build plain-text body
+      const nl = '\r\n';
+      let body = '';
+      body += `Dear Sir,${nl}${nl}`;
+      body += `Please find attached Weekly Gate out report for below customers.${nl}${nl}`;
+
+      // Customer Table
+      body += `Shipping Line : MSC${nl}`;
+      body += `-------------------------------------------${nl}`;
+      body += `Customer Name${nl}`;
+      body += `-------------------------------------------${nl}`;
+      body += `ARORA IRON & STEEL ROLLING MILLS P.L.${nl}`;
+      body += `MADHAV KRG HRC PRIVATE LIMITED${nl}`;
+      body += `MADHAV KRG LIMITED${nl}`;
+      body += `JYOTI INDUSTRIES UNIT NO.II${nl}`;
+      body += `KHANNA PAPER MILLS LTD.${nl}`;
+      body += `VISHAL PAPERTECH (INDIA) LTD${nl}`;
+      body += `VISHAL PAPER MILLS PVT. LTD${nl}`;
+      body += `-------------------------------------------${nl}${nl}`;
+
+      // Signature
+      body += `Regards,${nl}`;
+      body += `Vikram Singh${nl}`;
+      body += `Manager Customer Service/Sales${nl}`;
+      body += `Hind Terminals Pvt Ltd${nl}`;
+      body += `Address: SCO No.14-15, Dhamija Tower, First Floor, Urban Estate, Phase -3, Opp. FCI Godown, Focal Point, Ludhiana- 141010${nl}`;
+      body += `Phone: +91-9988466317 | Landline: 0161-4417569 | Email: vikram.singh@hindterminals.com${nl}`;
+      body += `Website: www.hindterminals.com${nl}`;
+
+      // Build mailto URL
+      const mailtoUrl = `mailto:${encodeURIComponent(toEmail)}`
+        + `?cc=${encodeURIComponent(ccEmails)}`
+        + `&subject=${encodeURIComponent(subject)}`
+        + `&body=${encodeURIComponent(body)}`;
+
+      // Open in Outlook
+      window.location.href = mailtoUrl;
+
+      showToast(`📧 Outlook opened! Please attach the downloaded Excel file before sending.`);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initConsigneeUI();
+    });
+  </script>
 </body>
 </html>
